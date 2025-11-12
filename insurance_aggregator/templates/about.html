@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Insurance Buddy | About Us{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden">
+    <div class="soft-gradient" aria-hidden="true"></div>
+    <div class="max-w-5xl mx-auto px-6 py-24 relative z-10 space-y-10 text-center">
+        <p class="text-sm uppercase tracking-[0.3em] text-brand/60">{{ about_content.kicker }}</p>
+        <h1 class="text-4xl font-semibold">{{ about_content.headline }}</h1>
+        <p class="text-lg text-brand/70">{{ about_content.intro }}</p>
+    </div>
+</section>
+
+<section class="max-w-5xl mx-auto px-6 pb-24">
+    <div class="grid gap-8 md:grid-cols-3">
+        {% for value in about_values %}
+        <div class="story-card">
+            <div class="story-icon">{{ value.icon }}</div>
+            <h3 class="text-xl font-semibold">{{ value.title }}</h3>
+            <p class="text-sm text-brand/70">{{ value.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

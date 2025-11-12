@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Insurance Buddy | Contact{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-6 py-24 space-y-8 text-center">
+    <p class="text-sm uppercase tracking-[0.3em] text-brand/60">{{ contact_content.kicker }}</p>
+    <h1 class="text-4xl font-semibold">{{ contact_content.headline }}</h1>
+    <p class="text-brand/70">Email us at <a href="mailto:{{ contact_content.support_email }}" class="font-semibold text-brand">{{ contact_content.support_email }}</a> or use the form below. {{ contact_content.intro }}</p>
+
+    <div class="card-panel max-w-2xl mx-auto">
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {% if submitted %}
+            <div class="rounded-2xl bg-emerald-50 text-emerald-600 text-sm font-medium px-4 py-3">Thank you! We received your message and will reply shortly.</div>
+            {% endif %}
+            <div>
+                <label class="form-label">Name</label>
+                <input type="text" name="name" placeholder="Aanya Patel" class="input-field" required />
+            </div>
+            <div>
+                <label class="form-label">Email</label>
+                <input type="email" name="email" placeholder="you@university.edu" class="input-field" required />
+            </div>
+            <div>
+                <label class="form-label">Message</label>
+                <textarea name="message" rows="4" placeholder="Tell us about your question" class="input-field" required></textarea>
+            </div>
+            <button type="submit" class="gradient-button w-full">Send Message</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

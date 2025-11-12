@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: gunicorn insurance_aggregator.wsgi:application
+    startCommand: python manage.py migrate --noinput && gunicorn insurance_aggregator.wsgi:application
     preDeployCommand: python manage.py migrate && python manage.py create_default_superuser
     envVars:
       - key: DJANGO_SECRET_KEY

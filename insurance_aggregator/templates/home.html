@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Insurance Buddy | Compare Travel & Health Insurance{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden bg-gradient-to-br from-[#635bff] via-[#6d89ff] to-[#80d0c7] text-white">
+    <div class="animated-gradient" aria-hidden="true"></div>
+    <div class="relative z-10 max-w-6xl mx-auto px-6 py-24 grid gap-12 lg:grid-cols-2 items-center">
+        <div class="space-y-8">
+            <p class="text-sm uppercase tracking-[0.2em] text-white/70">{{ home_content.hero_kicker }}</p>
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight">
+                {{ home_content.hero_headline }}
+            </h1>
+            <p class="text-lg text-white/80 max-w-xl">
+                {{ home_content.hero_subheadline }}
+            </p>
+            <div class="flex flex-wrap items-center gap-4">
+                <a href="{{ home_content.primary_cta_url }}" class="gradient-button text-base">{{ home_content.primary_cta_label }}</a>
+                <a href="{{ home_content.secondary_cta_url }}" class="text-base font-semibold text-white/80 hover:text-white transition">{{ home_content.secondary_cta_label }}</a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-6 border-t border-white/10">
+                {% for stat in home_stats %}
+                <div>
+                    <p class="text-3xl font-semibold">{{ stat.value }}</p>
+                    <p class="text-sm text-white/70">{{ stat.label }}</p>
+                    <p class="text-xs text-white/60">{{ stat.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="relative flex justify-center lg:justify-end">
+            <div class="floating-card hero-compare-card shadow-floating w-full mx-auto lg:mx-0 lg:ml-auto lg:self-center">
+                <p class="text-sm uppercase text-white/70 tracking-[0.3em] hero-card-text" style="--delay: 0.05s">Live Comparison</p>
+                <h3 class="text-2xl font-semibold mt-3 text-white hero-card-text" style="--delay: 0.15s">Coverage snapshot</h3>
+                <ul class="space-y-4 mt-6 text-white/90">
+                    <li class="flex items-center justify-between hero-card-text" style="--delay: 0.3s">
+                        <div>
+                            <p class="font-medium text-white">SafeVoyage Plus</p>
+                            <p class="text-sm text-white/70">Worldwide + U.S.</p>
+                        </div>
+                        <p class="text-2xl font-semibold text-white">$32<span class="text-base font-normal text-white/70">/mo</span></p>
+                    </li>
+                    <li class="flex items-center justify-between hero-card-text" style="--delay: 0.45s">
+                        <div>
+                            <p class="font-medium text-white">CampusCare Essential</p>
+                            <p class="text-sm text-white/70">Emergency + wellness</p>
+                        </div>
+                        <p class="text-2xl font-semibold text-white">$41<span class="text-base font-normal text-white/70">/mo</span></p>
+                    </li>
+                    <li class="flex items-center justify-between hero-card-text" style="--delay: 0.6s">
+                        <div>
+                            <p class="font-medium text-white">Atlas Explorer</p>
+                            <p class="text-sm text-white/70">Adventure-ready</p>
+                        </div>
+                        <p class="text-2xl font-semibold text-white">$55<span class="text-base font-normal text-white/70">/mo</span></p>
+                    </li>
+                </ul>
+                <div class="mt-8 flex items-center justify-between text-sm text-white/70 hero-card-text" style="--delay: 0.75s">
+                    <span>Auto-refresh every 30s</span>
+                    <span>Secure &amp; private</span>
+                </div>
+            </div>
+            <div class="shape shape-left" aria-hidden="true"></div>
+            <div class="shape shape-right" aria-hidden="true"></div>
+        </div>
+    </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-6 py-20">
+    <div class="grid gap-8 md:grid-cols-3">
+        {% for feature in home_features %}
+        <div class="feature-card">
+            <div class="feature-icon text-2xl">{{ feature.icon }}</div>
+            <h3 class="text-xl font-semibold">{{ feature.title }}</h3>
+            <p class="text-sm text-brand/70">{{ feature.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-6 pb-24">
+    <div class="partner-band">
+        <div class="partner-band__glow" aria-hidden="true"></div>
+        <div class="partner-band__content">
+            <div class="space-y-4 max-w-2xl">
+                <p class="text-sm font-semibold text-white/70 uppercase tracking-[0.3em]">{{ home_content.trust_heading }}</p>
+                <h2 class="text-3xl md:text-4xl font-semibold text-white leading-tight">{{ home_content.trust_body }}</h2>
+                <p class="text-white/80">We collaborate directly with international student offices to tailor recommendations, automate waiver checks, and keep coverage documentation up to date.</p>
+            </div>
+            <div class="partner-logo-wall">
+                {% for university in partner_universities %}
+                <a href="{{ university.website }}" class="partner-logo-card" style="--delay: {{ university.delay }};" target="_blank" rel="noopener noreferrer">
+                    <div class="partner-logo-wrap">
+                        <img src="{{ university.logo_url }}" alt="{{ university.name }} logo" class="partner-logo" loading="lazy" />
+                    </div>
+                    <div class="partner-logo-meta">
+                        <p class="partner-name">{{ university.name }}</p>
+                        <p class="partner-campus">{{ university.campus }}</p>
+                    </div>
+                </a>
+                {% empty %}
+                <p class="text-white/80 text-sm">Partner universities coming soon.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

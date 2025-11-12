@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Insurance Buddy | Compare Plans{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-6 py-20 space-y-16">
+    <div class="space-y-4">
+        <p class="text-sm uppercase tracking-[0.2em] text-brand/60">{{ product_content.kicker|default:'Plan builder' }}</p>
+        <h1 class="text-4xl font-semibold text-brand">{{ product_content.headline|default:'Design the perfect coverage mix.' }}</h1>
+        <p class="text-lg text-brand/70 max-w-3xl">{{ product_content.subheadline|default:'Build profiles, search cities, and review side-by-side comparisons powered entirely by our curated static dataset.' }}</p>
+        <p class="text-sm text-brand/60">Showing <span class="font-semibold text-brand">{{ results_count }}</span> matching plans.</p>
+    </div>
+
+    <div class="grid gap-10 lg:grid-cols-2">
+        <form method="get" class="card-panel space-y-6" novalidate>
+            <div>
+                <p class="text-sm font-semibold text-brand/60">1. Select Members</p>
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    {% for option in member_options %}
+                    <label class="select-tile {% if option.value == selected_member %}select-tile--active{% endif %}">
+                        <input type="radio" name="member" value="{{ option.value }}" {% if option.value == selected_member %}checked{% endif %} />
+                        <span class="select-tile-icon">{{ option.icon }}</span>
+                        <div>
+                            <p class="font-semibold">{{ option.label }}</p>
+                            <p class="text-xs text-brand/60">{{ option.description }}</p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-brand/60">2. Select Age</p>
+                <div class="mt-4 flex items-center gap-4">
+                    <input type="range" min="0" max="70" name="age" value="{{ selected_age }}" class="w-full accent-[#635bff]" />
+                    <div class="range-display">{{ selected_age }}</div>
+                </div>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-brand/60">3. Select City</p>
+                <div class="mt-4">
+                    <input list="cities" name="city" value="{{ selected_city }}" placeholder="Start typing a U.S. city" class="input-field" />
+                    <datalist id="cities">
+                        {% for city in cities %}
+                        <option value="{{ city }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+            </div>
+            <button type="submit" class="gradient-button w-full mt-4">Update Plans</button>
+            <p class="text-xs text-brand/50 text-center">All results are loaded from <span class="font-semibold">static data</span> – no API calls required.</p>
+        </form>
+        <div class="card-panel space-y-6">
+            <div>
+                <p class="text-sm font-semibold text-brand/60">4. Enter Details</p>
+                <p class="text-sm text-brand/60 mt-2">{{ plan_summary }}</p>
+                <p class="text-xs text-brand/50">{{ plan_summary_secondary }}</p>
+                {% if product_content.summary_line %}
+                <p class="text-xs text-brand/50">{{ product_content.summary_line }}</p>
+                {% endif %}
+                {% if product_content.summary_secondary %}
+                <p class="text-xs text-brand/50">{{ product_content.summary_secondary }}</p>
+                {% endif %}
+                {% if fallback_to_all %}
+                <p class="text-xs text-amber-600 mt-2 font-medium">No exact matches for your filters—showing the closest available plans.</p>
+                {% endif %}
+            </div>
+            <form class="space-y-4">
+                <div>
+                    <label class="form-label">Full name</label>
+                    <input type="text" placeholder="Aanya Patel" class="input-field" />
+                </div>
+                <div>
+                    <label class="form-label">Email</label>
+                    <input type="email" placeholder="aanya@university.edu" class="input-field" />
+                </div>
+                <button type="button" class="gradient-button w-full">Unlock Matches</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <h2 class="text-2xl font-semibold">Plans curated for you</h2>
+            <p class="text-sm text-brand/60">Compare deductibles, out-of-pocket limits, and referral rules without leaving the page.</p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2">
+            {% for plan in featured_plans %}
+            <div class="plan-card">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="space-y-1">
+                        <p class="text-xs uppercase tracking-wide text-brand/60">{{ plan.provider }}</p>
+                        <h3 class="text-xl font-semibold leading-tight">{{ plan.plan_name }}</h3>
+                        <p class="text-sm text-brand/60">{{ plan.audience_label }}</p>
+                    </div>
+                    {% if plan.cities_display %}
+                    <span class="plan-tag plan-tag--pill">{{ plan.cities_display }}</span>
+                    {% endif %}
+                </div>
+                <dl class="plan-metrics">
+                    <div>
+                        <dt>Deductible</dt>
+                        <dd>{{ plan.overall_deductible|default:'Included' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Preventive before deductible</dt>
+                        <dd>{{ plan.services_before_deductible|default:'See plan docs' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Out-of-pocket max</dt>
+                        <dd>{{ plan.oop_individual|default:'N/A' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Referral needed</dt>
+                        <dd>{{ plan.referral_required|yesno:"Yes,No" }}</dd>
+                    </div>
+                </dl>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    {% for tag in plan.tags %}
+                    <span class="plan-tag plan-tag--subtle">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    {% for city in plan.cities %}
+                    <span class="chip chip-light">{{ city }}</span>
+                    {% endfor %}
+                </div>
+                <button class="gradient-button w-full mt-6">Select Plan</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <h2 class="text-2xl font-semibold">Compare plans side by side</h2>
+        <div class="overflow-hidden rounded-3xl bg-white shadow-floating">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left">
+                    <thead class="bg-[#f6f9fc] text-xs uppercase tracking-wide text-brand/60">
+                        <tr>
+                            <th class="px-6 py-4">Benefit</th>
+                            {% for plan in comparison_plans %}
+                            <th class="px-6 py-4">{{ plan.plan_name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        {% for row in comparison_rows %}
+                        <tr class="border-t border-slate-100">
+                            <td class="px-6 py-4 font-semibold">{{ row.label }}</td>
+                            {% for value in row.values %}
+                            <td class="px-6 py-4 text-brand/70">{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block body_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const rangeInput = document.querySelector('input[type=\"range\"]');
+        const display = document.querySelector('.range-display');
+        if (rangeInput && display) {
+            const updateDisplay = () => {
+                display.textContent = rangeInput.value;
+            };
+            rangeInput.addEventListener('input', updateDisplay);
+            updateDisplay();
+        }
+    });
+</script>
+{% endblock %}
