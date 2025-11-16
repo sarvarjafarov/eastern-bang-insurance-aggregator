@@ -31,6 +31,12 @@ MEMBER_OPTIONS = [
 DEFAULT_AGE = 24
 
 
+def _strip_reference(value):
+    if isinstance(value, str) and ':contentReference' in value:
+        return value.split(':contentReference', 1)[0]
+    return value
+
+
 def _default_home_content():
     return {
         'hero_kicker': 'For international students in the U.S.',
@@ -303,3 +309,88 @@ def contact(request):
             support_email='support@insurancebuddy.com',
         )
     return render(request, 'contact.html', {'submitted': submitted, 'contact_content': contact_content})
+
+
+def dashboard(request):
+    catalog = load_plan_catalog()
+    plan_count = len(catalog)
+    cities = sorted({city for plan in catalog for city in (plan.get('cities') or [])})
+    city_count = len(cities) or 0
+    adult_ready = sum(1 for plan in catalog if plan.get('for-adult'))
+    child_ready = sum(1 for plan in catalog if plan.get('for-child'))
+
+    top_plans = []
+    for plan in catalog[:4]:
+        plan_cities = ', '.join(plan.get('cities') or ['N/A'])
+        if plan.get('for-adult') and plan.get('for-child'):
+            segment = 'Family ready'
+        elif plan.get('for-adult'):
+            segment = 'Adult only'
+        elif plan.get('for-child'):
+            segment = 'Child ready'
+        else:
+            segment = 'Specialty'
+        top_plans.append(
+            {
+                'name': plan.get('plan_name'),
+                'cities': plan_cities or 'N/A',
+                'segment': segment,
+                'deductible': _strip_reference(plan.get('overall-deductible', '—')),
+                'oop': _strip_reference(plan.get('out-of-pocket-limit-individual', '—')),
+            }
+        )
+
+    flow_cards = [
+        {'label': 'Active users', 'value': '4.2K', 'change': '+8.1% vs last week'},
+        {'label': 'Qualified leads', 'value': '932', 'change': '+12 new schools'},
+        {'label': 'Plans live', 'value': f'{plan_count}', 'change': 'Dataset refreshed nightly'},
+        {'label': 'Cities tracked', 'value': f'{city_count}', 'change': 'Expansion list ready'},
+    ]
+
+    user_segments = [
+        {'title': 'New signups', 'value': '312', 'detail': 'Week to date', 'trend': '+3.2%'},
+        {'title': 'Activated accounts', 'value': '2,841', 'detail': '92% completion', 'trend': '+1.1%'},
+        {'title': 'Campus partners', 'value': '58', 'detail': '9 in onboarding', 'trend': '+14%'},
+    ]
+
+    recent_users = [
+        {'name': 'Esther Howard', 'email': 'esther@yale.edu', 'region': 'US · CT', 'plan': 'Yale SHP', 'status': 'Verified'},
+        {'name': 'Diego Flores', 'email': 'diego@mit.edu', 'region': 'US · MA', 'plan': 'MIT Classic', 'status': 'Pending docs'},
+        {'name': 'Jun Park', 'email': 'jun.park@rice.edu', 'region': 'US · TX', 'plan': 'Rice Guardian', 'status': 'Active'},
+        {'name': 'Ava Thompson', 'email': 'ava.t@columbia.edu', 'region': 'US · NY', 'plan': 'Columbia Core', 'status': 'Trial'},
+    ]
+
+    pipeline = [
+        {'stage': 'Acquisition', 'value': '68%', 'status': 'healthy', 'detail': 'Paid + content mix'},
+        {'stage': 'Eligibility review', 'value': '54%', 'status': 'watch', 'detail': 'Docs queue up 6 hrs'},
+        {'stage': 'Plan comparison', 'value': '82%', 'status': 'healthy', 'detail': 'New filters driving usage'},
+        {'stage': 'Checkout', 'value': '34%', 'status': 'risk', 'detail': 'Payment partner SLA investigating'},
+    ]
+
+    operations_feed = [
+        {'time': '12:40', 'title': 'API import complete', 'meta': '17 new plans synced', 'trend': '+', 'status': 'success'},
+        {'time': '11:05', 'title': 'Escalation resolved', 'meta': 'MIT dental waiver approved', 'trend': '→', 'status': 'neutral'},
+        {'time': '09:32', 'title': 'Incident #1841', 'meta': 'Delayed webhook from carrier', 'trend': '!', 'status': 'alert'},
+        {'time': '07:50', 'title': 'New campus pilot', 'meta': 'Columbia SIPA onboarding', 'trend': '+', 'status': 'success'},
+    ]
+
+    product_health = [
+        {'title': 'Coverage freshness', 'value': '99.2%', 'detail': 'Last import 35m ago'},
+        {'title': 'Eligibility accuracy', 'value': '97%', 'detail': 'Manual QA sample this AM'},
+        {'title': 'Support SLA', 'value': '12m', 'detail': 'Median first reply'},
+    ]
+
+    context = {
+        'plan_count': plan_count,
+        'city_count': city_count,
+        'adult_ready': adult_ready,
+        'child_ready': child_ready,
+        'flow_cards': flow_cards,
+        'user_segments': user_segments,
+        'recent_users': recent_users,
+        'pipeline': pipeline,
+        'operations_feed': operations_feed,
+        'product_health': product_health,
+        'top_plans': top_plans,
+    }
+    return render(request, 'dashboard.html', context)

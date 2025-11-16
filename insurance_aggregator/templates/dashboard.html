@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Operations Dashboard | Insurance Buddy{% endblock %}
+
+{% block content %}
+<section class="bg-gradient-to-r from-brand to-[#5c68ff] text-white">
+    <div class="max-w-6xl mx-auto px-6 py-14 grid gap-10 lg:grid-cols-[2fr,1fr] items-center">
+        <div>
+            <p class="text-sm uppercase tracking-[0.2em] text-white/70">Control center</p>
+            <h1 class="mt-3 text-3xl md:text-4xl font-semibold leading-tight">Monitor every signal from sign-up to checkout.</h1>
+            <p class="mt-4 text-white/80 text-base max-w-2xl">
+                Live user cohorts, product freshness, and operations health stitched together so the team can spot anomalies before campus partners do.
+            </p>
+            <div class="mt-6 grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:gap-8">
+                <div>
+                    <p class="text-3xl font-semibold">{{ plan_count }}</p>
+                    <p class="text-sm text-white/70">Plans indexed</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-semibold">{{ city_count }}</p>
+                    <p class="text-sm text-white/70">Cities monitored</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-semibold">{{ adult_ready }}</p>
+                    <p class="text-sm text-white/70">Adult-ready</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-semibold">{{ child_ready }}</p>
+                    <p class="text-sm text-white/70">Child-ready</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-3xl p-6 space-y-5 border border-white/20 shadow-2xl shadow-brand/30">
+            <p class="text-sm uppercase tracking-wide text-white/70">Realtime posture</p>
+            <dl class="space-y-4">
+                {% for card in flow_cards %}
+                <div class="flex items-center justify-between">
+                    <dt class="text-sm text-white/80">{{ card.label }}</dt>
+                    <dd class="text-right">
+                        <p class="text-lg font-semibold">{{ card.value }}</p>
+                        <p class="text-xs text-emerald-200">{{ card.change }}</p>
+                    </dd>
+                </div>
+                {% endfor %}
+            </dl>
+        </div>
+    </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-6 py-12 space-y-10">
+    <div class="grid gap-6 lg:grid-cols-3">
+        {% for segment in user_segments %}
+        <div class="bg-white rounded-2xl p-6 shadow-floating border border-brand/5">
+            <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-brand/70">{{ segment.title }}</p>
+                <span class="text-xs px-2 py-1 rounded-full bg-indigo-50 text-indigo-700">{{ segment.trend }}</span>
+            </div>
+            <p class="mt-4 text-3xl font-semibold text-brand">{{ segment.value }}</p>
+            <p class="text-sm text-brand/60">{{ segment.detail }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <div class="bg-white rounded-3xl p-6 shadow-floating border border-brand/5">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <p class="text-sm uppercase tracking-wide text-brand/50">User journey</p>
+                    <h2 class="text-xl font-semibold text-brand">Pipeline overview</h2>
+                </div>
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand/5 text-brand">Live</span>
+            </div>
+            <div class="space-y-5">
+                {% for stage in pipeline %}
+                <div class="p-4 rounded-2xl border border-brand/5 bg-brand/2">
+                    <div class="flex items-center justify-between">
+                        <p class="font-medium text-brand">{{ stage.stage }}</p>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full {% if stage.status == 'healthy' %}bg-emerald-50 text-emerald-600{% elif stage.status == 'risk' %}bg-rose-50 text-rose-600{% else %}bg-amber-50 text-amber-600{% endif %}">
+                            {{ stage.status|title }}
+                        </span>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                        <p class="text-2xl font-semibold text-brand">{{ stage.value }}</p>
+                        <p class="text-sm text-brand/60">{{ stage.detail }}</p>
+                    </div>
+                    <div class="mt-3 h-2 rounded-full bg-brand/5 overflow-hidden">
+                        {% if stage.status == 'healthy' %}
+                            {% with width=stage.value|cut:'%' %}
+                            <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" style="width: {{ width }}%;"></div>
+                            {% endwith %}
+                        {% elif stage.status == 'risk' %}
+                            {% with width=stage.value|cut:'%' %}
+                            <div class="h-full bg-gradient-to-r from-rose-400 to-rose-500" style="width: {{ width }}%;"></div>
+                            {% endwith %}
+                        {% else %}
+                            {% with width=stage.value|cut:'%' %}
+                            <div class="h-full bg-gradient-to-r from-amber-400 to-amber-500" style="width: {{ width }}%;"></div>
+                            {% endwith %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 shadow-floating border border-brand/5 space-y-5">
+            <div>
+                <p class="text-sm uppercase tracking-wide text-brand/50">Product health</p>
+                <h2 class="text-xl font-semibold text-brand">Catalog telemetry</h2>
+            </div>
+            <div class="space-y-5">
+                {% for metric in product_health %}
+                <div>
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-brand/70">{{ metric.title }}</p>
+                        <p class="text-lg font-semibold text-brand">{{ metric.value }}</p>
+                    </div>
+                    <p class="text-sm text-brand/50">{{ metric.detail }}</p>
+                    <div class="mt-3 h-1.5 rounded-full bg-brand/5 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-accent to-[#8c7bff]" style="width: 95%;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-[2fr,1fr]">
+        <div class="bg-white rounded-3xl shadow-floating border border-brand/5 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-brand/5">
+                <div>
+                    <p class="text-sm uppercase tracking-wide text-brand/50">User roster</p>
+                    <h2 class="text-xl font-semibold text-brand">Latest activity</h2>
+                </div>
+                <a href="#" class="text-sm font-semibold text-accent hover:text-accent/80">View all</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-brand/10 text-sm">
+                    <thead class="bg-brand/5 text-brand/60">
+                        <tr>
+                            <th class="px-6 py-3 text-left font-medium">User</th>
+                            <th class="px-6 py-3 text-left font-medium">Region</th>
+                            <th class="px-6 py-3 text-left font-medium">Plan</th>
+                            <th class="px-6 py-3 text-left font-medium">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-brand/10 text-brand">
+                        {% for user in recent_users %}
+                        <tr>
+                            <td class="px-6 py-4">
+                                <p class="font-medium">{{ user.name }}</p>
+                                <p class="text-xs text-brand/60">{{ user.email }}</p>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-brand/70">{{ user.region }}</td>
+                            <td class="px-6 py-4 text-sm">{{ user.plan }}</td>
+                            <td class="px-6 py-4">
+                                <span class="text-xs font-semibold px-3 py-1 rounded-full {% if 'Pending' in user.status %}bg-amber-50 text-amber-700{% elif 'Trial' in user.status %}bg-indigo-50 text-indigo-700{% elif 'Verified' in user.status or 'Active' in user.status %}bg-emerald-50 text-emerald-700{% else %}bg-brand/5 text-brand{% endif %}">{{ user.status }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-floating border border-brand/5 p-6 flex flex-col">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <p class="text-sm uppercase tracking-wide text-brand/50">Ops log</p>
+                    <h2 class="text-xl font-semibold text-brand">Live feed</h2>
+                </div>
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand/5 text-brand">Auto-refresh</span>
+            </div>
+            <div class="space-y-4 flex-1">
+                {% for entry in operations_feed %}
+                <div class="p-4 rounded-2xl border border-brand/5 {% if entry.status == 'alert' %}bg-rose-50{% elif entry.status == 'success' %}bg-emerald-50{% else %}bg-brand/5{% endif %}">
+                    <div class="flex items-center justify-between text-xs text-brand/60">
+                        <span>{{ entry.time }}</span>
+                        <span>{{ entry.meta }}</span>
+                    </div>
+                    <p class="mt-2 font-semibold text-brand">{{ entry.title }}</p>
+                    <span class="inline-flex items-center text-xs font-semibold mt-2 px-2 py-1 rounded-full {% if entry.status == 'alert' %}bg-rose-100 text-rose-700{% elif entry.status == 'success' %}bg-emerald-100 text-emerald-700{% else %}bg-brand/10 text-brand{% endif %}">
+                        {{ entry.status|title }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-2">
+        <div class="bg-white rounded-3xl shadow-floating border border-brand/5 p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <p class="text-sm uppercase tracking-wide text-brand/50">Product data</p>
+                    <h2 class="text-xl font-semibold text-brand">Top tracked plans</h2>
+                </div>
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand/5 text-brand">{{ plan_count }} plans total</span>
+            </div>
+            <div class="space-y-4">
+                {% for plan in top_plans %}
+                <div class="p-4 rounded-2xl border border-brand/5 bg-brand/2">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-brand">{{ plan.name }}</p>
+                            <p class="text-sm text-brand/60">{{ plan.cities }}</p>
+                        </div>
+                        <span class="text-xs font-semibold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700">{{ plan.segment }}</span>
+                    </div>
+                    <div class="mt-3 grid grid-cols-2 gap-3 text-sm text-brand/70">
+                        <p>Deductible<br><span class="text-brand font-semibold">{{ plan.deductible }}</span></p>
+                        <p>OOP limit<br><span class="text-brand font-semibold">{{ plan.oop }}</span></p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-floating border border-brand/5 p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <p class="text-sm uppercase tracking-wide text-brand/50">Action queue</p>
+                    <h2 class="text-xl font-semibold text-brand">What needs attention</h2>
+                </div>
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand/5 text-brand">5 open loops</span>
+            </div>
+            <ul class="space-y-4">
+                <li class="flex items-start gap-3">
+                    <span class="mt-1 h-2 w-2 rounded-full bg-rose-500"></span>
+                    <div>
+                        <p class="font-medium text-brand">Checkout drop detected on mobile</p>
+                        <p class="text-sm text-brand/60">Sessions w/ older Safari. Engineering triaging PSP fallback.</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-rose-50 text-rose-600">Priority</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="mt-1 h-2 w-2 rounded-full bg-amber-500"></span>
+                    <div>
+                        <p class="font-medium text-brand">Docs backlog approaching SLA</p>
+                        <p class="text-sm text-brand/60">Eligibility review queue at 54%. Add second shift helper.</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-600">Watch</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <div>
+                        <p class="font-medium text-brand">Columbia SIPA onboarding</p>
+                        <p class="text-sm text-brand/60">Training toolkit approved. Go-live scheduled for Thursday.</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">On track</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="mt-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+                    <div>
+                        <p class="font-medium text-brand">Plan builder v2 experiment</p>
+                        <p class="text-sm text-brand/60">Awaiting analytics review of new filter interactions.</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-700">In review</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+{% endblock %}
