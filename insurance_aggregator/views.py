@@ -1,6 +1,7 @@
 from typing import Optional
 from types import SimpleNamespace
 
+from django.contrib.admin.views.decorators import staff_member_required
 from django.db import OperationalError, ProgrammingError
 from django.shortcuts import render
 from django.templatetags.static import static
@@ -311,6 +312,7 @@ def contact(request):
     return render(request, 'contact.html', {'submitted': submitted, 'contact_content': contact_content})
 
 
+@staff_member_required
 def dashboard(request):
     catalog = load_plan_catalog()
     plan_count = len(catalog)
