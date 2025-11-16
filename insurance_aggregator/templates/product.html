@@ -48,7 +48,7 @@
             <button type="submit" class="gradient-button w-full mt-4">Update Plans</button>
             <p class="text-xs text-brand/50 text-center">All results are loaded from <span class="font-semibold">static data</span> – no API calls required.</p>
         </form>
-        <div class="card-panel space-y-6">
+        <div class="card-panel space-y-6" id="leadForm">
             <div>
                 <p class="text-sm font-semibold text-brand/60">4. Enter Details</p>
                 <p class="text-sm text-brand/60 mt-2">{{ plan_summary }}</p>
@@ -63,17 +63,21 @@
                 <p class="text-xs text-amber-600 mt-2 font-medium">No exact matches for your filters—showing the closest available plans.</p>
                 {% endif %}
             </div>
-            <form class="space-y-4">
+            <form class="space-y-4" id="unlockForm">
                 <div>
                     <label class="form-label">Full name</label>
-                    <input type="text" placeholder="Aanya Patel" class="input-field" />
+                    <input type="text" placeholder="Aanya Patel" class="input-field" name="full_name" required />
                 </div>
                 <div>
                     <label class="form-label">Email</label>
-                    <input type="email" placeholder="aanya@university.edu" class="input-field" />
+                    <input type="email" placeholder="aanya@university.edu" class="input-field" name="email" required />
                 </div>
-                <button type="button" class="gradient-button w-full">Unlock Matches</button>
+                <button type="submit" class="gradient-button w-full">Unlock Matches</button>
             </form>
+            <div class="thank-you-banner" id="thankYou" hidden>
+                <p class="thank-you-banner__title">Thank you!</p>
+                <p class="thank-you-banner__body">We’ll inform you shortly—our sales rep will get in touch with you.</p>
+            </div>
         </div>
     </div>
 
@@ -127,7 +131,7 @@
                     <span class="chip chip-light">{{ city }}</span>
                     {% endfor %}
                 </div>
-                <button class="gradient-button w-full mt-6">Select Plan</button>
+                <button class="gradient-button w-full mt-6 select-plan-btn" type="button">Select Plan</button>
             </div>
             {% endfor %}
         </div>
@@ -199,6 +203,33 @@
         });
 
         syncMemberTiles();
+
+        const selectButtons = document.querySelectorAll('.select-plan-btn');
+        const leadForm = document.getElementById('leadForm');
+        const thankYou = document.getElementById('thankYou');
+        const unlockForm = document.getElementById('unlockForm');
+
+        selectButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                leadForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        if (unlockForm && thankYou) {
+            unlockForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const formData = new FormData(unlockForm);
+                if (!formData.get('full_name') || !formData.get('email')) {
+                    return;
+                }
+                unlockForm.reset();
+                thankYou.hidden = false;
+                thankYou.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    thankYou.hidden = true;
+                }, 8000);
+            });
+        }
     });
 </script>
 {% endblock %}

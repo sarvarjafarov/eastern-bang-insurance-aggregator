@@ -531,6 +531,26 @@
     color: rgba(10, 37, 64, 0.5);
 }
 
+.thank-you-banner {
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    background: rgba(99, 91, 255, 0.08);
+    border: 1px solid rgba(99, 91, 255, 0.2);
+    text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.thank-you-banner__title {
+    font-weight: 600;
+    font-size: 1.15rem;
+    color: var(--brand);
+}
+
+.thank-you-banner__body {
+    font-size: 0.95rem;
+    color: rgba(10, 37, 64, 0.7);
+}
+
 .soft-gradient {
     position: absolute;
     inset: 0;
