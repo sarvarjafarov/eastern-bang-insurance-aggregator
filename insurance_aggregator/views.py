@@ -1,6 +1,7 @@
 from typing import Optional
 from types import SimpleNamespace
 
+from django.db import OperationalError, ProgrammingError
 from django.shortcuts import render
 from django.templatetags.static import static
 
@@ -100,19 +101,32 @@ def _default_partners():
 
 
 def home(request):
-    home_page = HomePageContent.objects.prefetch_related('features', 'stats').first()
-    partners_qs = PartnerOrganization.objects.all()
+    try:
+        home_page = HomePageContent.objects.prefetch_related('features', 'stats').first()
+    except (OperationalError, ProgrammingError):
+        home_page = None
+
+    try:
+        partners = list(PartnerOrganization.objects.values('name', 'campus', 'website', 'logo_url'))
+    except (OperationalError, ProgrammingError):
+        partners = []
 
     if home_page:
-        features = list(home_page.features.values('icon', 'title', 'description'))
-        stats = list(home_page.stats.values('value', 'label', 'description'))
+        try:
+            features = list(home_page.features.values('icon', 'title', 'description'))
+        except (OperationalError, ProgrammingError):
+            features = _default_features()
+        try:
+            stats = list(home_page.stats.values('value', 'label', 'description'))
+        except (OperationalError, ProgrammingError):
+            stats = _default_home_stats()
         home_data = home_page
     else:
         features = _default_features()
         stats = _default_home_stats()
         home_data = SimpleNamespace(**_default_home_content())
 
-    partners = list(partners_qs.values('name', 'campus', 'website', 'logo_url')) or _default_partners()
+    partners = partners or _default_partners()
     for index, partner in enumerate(partners):
         partner['delay'] = f'{0.1 * index:.1f}s'
 
@@ -126,10 +140,19 @@ def home(request):
 
 
 def about(request):
-    about_page = AboutPageContent.objects.prefetch_related('values').first()
+    try:
+        about_page = AboutPageContent.objects.prefetch_related('values').first()
+    except (OperationalError, ProgrammingError):
+        about_page = None
+
+    values = []
     if about_page:
-        values = about_page.values.all()
-    else:
+        try:
+            values = list(about_page.values.all())
+        except (OperationalError, ProgrammingError):
+            values = []
+
+    if not about_page:
         about_page = SimpleNamespace(
             kicker='Our mission',
             headline='We make insurance simple for international students.',
@@ -138,6 +161,8 @@ def about(request):
                 'can secure the right coverage for study, travel, and everyday campus life.'
             ),
         )
+
+    if not values:
         values = [
             SimpleNamespace(icon='🔍', title='Transparency', description='Clear benefits, exclusions, and pricing.'),
             SimpleNamespace(icon='📊', title='Accuracy', description='Verified data refreshed throughout the day.'),
@@ -154,7 +179,10 @@ def _sanitize_member_choice(choice: str, valid_values: set, default_value: str) 
 
 
 def _member_options_with_defaults():
-    segments = list(AudienceSegment.objects.all())
+    try:
+        segments = list(AudienceSegment.objects.all())
+    except (OperationalError, ProgrammingError):
+        segments = []
     if segments:
         options = [
             {
@@ -230,7 +258,10 @@ def product(request):
         f"{summary['child_ready']} cover dependents · {summary['adult_ready']} adult-ready"
     )
 
-    product_content = ProductPageContent.objects.first()
+    try:
+        product_content = ProductPageContent.objects.first()
+    except (OperationalError, ProgrammingError):
+        product_content = None
     if not product_content:
         product_content = SimpleNamespace(
             kicker='Plan builder',
@@ -260,7 +291,10 @@ def product(request):
 
 def contact(request):
     submitted = request.method == 'POST'
-    contact_content = ContactPageContent.objects.first()
+    try:
+        contact_content = ContactPageContent.objects.first()
+    except (OperationalError, ProgrammingError):
+        contact_content = None
     if not contact_content:
         contact_content = SimpleNamespace(
             kicker='We are here to help',
