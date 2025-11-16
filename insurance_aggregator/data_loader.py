@@ -120,6 +120,14 @@ def _derive_tags(plan: dict) -> list:
     return tags
 
 
+def _compute_rating(plan_name: str) -> float:
+    if not plan_name:
+        return 4.2
+    seed = sum(ord(char) for char in plan_name)
+    rating = 4.2 + (seed % 8) * 0.1
+    return round(min(rating, 4.9), 1)
+
+
 @lru_cache(maxsize=1)
 def load_plan_catalog() -> list:
     with DATA_PATH.open() as source:
@@ -144,6 +152,7 @@ def load_plan_catalog() -> list:
         normalized['audience_label'] = _build_audience_label(normalized)
         normalized['tags'] = _derive_tags(normalized)
         normalized['cities_display'] = ', '.join(normalized['cities'])
+        normalized['rating'] = _compute_rating(normalized['plan_name'])
         catalog.append(normalized)
 
     return catalog

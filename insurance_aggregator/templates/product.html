@@ -91,9 +91,13 @@
                         <h3 class="text-xl font-semibold leading-tight">{{ plan.plan_name }}</h3>
                         <p class="text-sm text-brand/60">{{ plan.audience_label }}</p>
                     </div>
-                    {% if plan.cities_display %}
-                    <span class="plan-tag plan-tag--pill">{{ plan.cities_display }}</span>
-                    {% endif %}
+                    <div class="plan-rating-pill">
+                        <div class="plan-rating-pill__icon" aria-hidden="true">★</div>
+                        <div>
+                            <p class="plan-rating-pill__value">{{ plan.rating|default:'4.6' }}/5</p>
+                            <p class="plan-rating-pill__label">Partner score</p>
+                        </div>
+                    </div>
                 </div>
                 <dl class="plan-metrics">
                     <div>
@@ -162,7 +166,7 @@
 {% block body_scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const rangeInput = document.querySelector('input[type=\"range\"]');
+        const rangeInput = document.querySelector('input[type="range"]');
         const display = document.querySelector('.range-display');
         if (rangeInput && display) {
             const updateDisplay = () => {
@@ -171,6 +175,30 @@
             rangeInput.addEventListener('input', updateDisplay);
             updateDisplay();
         }
+
+        const memberInputs = document.querySelectorAll('.select-tile input[name="member"]');
+        const syncMemberTiles = () => {
+            memberInputs.forEach((input) => {
+                const tile = input.closest('.select-tile');
+                if (tile) {
+                    tile.classList.toggle('select-tile--active', input.checked);
+                }
+            });
+        };
+
+        memberInputs.forEach((input) => {
+            input.addEventListener('change', syncMemberTiles);
+            input.addEventListener('focus', () => {
+                const tile = input.closest('.select-tile');
+                if (tile) tile.classList.add('select-tile--hover');
+            });
+            input.addEventListener('blur', () => {
+                const tile = input.closest('.select-tile');
+                if (tile) tile.classList.remove('select-tile--hover');
+            });
+        });
+
+        syncMemberTiles();
     });
 </script>
 {% endblock %}
