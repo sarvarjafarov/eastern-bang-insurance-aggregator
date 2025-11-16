@@ -78,29 +78,39 @@
 </section>
 
 <section class="max-w-6xl mx-auto px-6 pb-24">
-    <div class="partner-band">
-        <div class="partner-band__glow" aria-hidden="true"></div>
-        <div class="partner-band__content">
-            <div class="space-y-4 max-w-2xl">
-                <p class="text-sm font-semibold text-white/70 uppercase tracking-[0.3em]">{{ home_content.trust_heading }}</p>
-                <h2 class="text-3xl md:text-4xl font-semibold text-white leading-tight">{{ home_content.trust_body }}</h2>
-                <p class="text-white/80">We collaborate directly with international student offices to tailor recommendations, automate waiver checks, and keep coverage documentation up to date.</p>
+    <div class="partner-showcase">
+        <div class="partner-showcase__glow" aria-hidden="true"></div>
+        <div class="partner-showcase__panel">
+            <p class="partner-showcase__eyebrow">{{ home_content.trust_heading }}</p>
+            <h2 class="partner-showcase__title">{{ home_content.trust_body }}</h2>
+            <p class="partner-showcase__intro">
+                We collaborate directly with international student offices to tailor recommendations, automate waiver checks, and keep coverage documentation up to date.
+            </p>
+            <div class="partner-showcase__meta">
+                <div>
+                    <p class="partner-showcase__meta-value">{{ partner_universities|length }}</p>
+                    <p class="partner-showcase__meta-label">University partners</p>
+                </div>
+                <div>
+                    <p class="partner-showcase__meta-value">48 hrs</p>
+                    <p class="partner-showcase__meta-label">Avg. waiver approval</p>
+                </div>
             </div>
-            <div class="partner-logo-wall">
-                {% for university in partner_universities %}
-                <a href="{{ university.website }}" class="partner-logo-card" style="--delay: {{ university.delay }};" target="_blank" rel="noopener noreferrer">
-                    <div class="partner-logo-wrap">
-                        <img src="{{ university.logo_url }}" alt="{{ university.name }} logo" class="partner-logo" loading="lazy" />
-                    </div>
-                    <div class="partner-logo-meta">
-                        <p class="partner-name">{{ university.name }}</p>
-                        <p class="partner-campus">{{ university.campus }}</p>
-                    </div>
-                </a>
-                {% empty %}
-                <p class="text-white/80 text-sm">Partner universities coming soon.</p>
-                {% endfor %}
-            </div>
+        </div>
+        <div class="partner-card-grid">
+            {% for university in partner_universities %}
+            <a href="{{ university.website }}" class="partner-card" style="--delay: {{ university.delay }};" target="_blank" rel="noopener noreferrer">
+                <div class="partner-card__logo">
+                    <img src="{{ university.logo_url }}" alt="{{ university.name }} logo" loading="lazy" />
+                </div>
+                <div class="partner-card__meta">
+                    <p class="partner-card__title">{{ university.name }}</p>
+                    <p class="partner-card__campus">{{ university.campus|default:'Location unavailable' }}</p>
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-white/80 text-sm">Partner universities coming soon.</p>
+            {% endfor %}
         </div>
     </div>
 </section>
