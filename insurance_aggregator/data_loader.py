@@ -36,6 +36,59 @@ GOVERNMENT_KEYWORDS = (
     'husky',
 )
 
+PLAN_URLS = {
+    "Yale University Student Health Plan": "https://yalehealth.yale.edu/patient-care/student-coverage",
+    "Student Medicover Supreme (UHCSR Top Tier)": "https://www.studentmedicover.com/",
+    "Student Medicover Elite (UHCSR)": "https://www.studentmedicover.com/",
+    "Student Medicover Prime 100 (UHCSR)": "https://www.studentmedicover.com/",
+    "Student Medicover Prime 500 (UHCSR)": "https://www.studentmedicover.com/",
+    "WorldTrips Student Secure Smart": "https://www.worldtrips.com/studentsecure",
+    "WorldTrips Student Secure Budget": "https://www.worldtrips.com/studentsecure",
+    "WorldTrips Student Secure Select": "https://www.worldtrips.com/studentsecure",
+    "WorldTrips Student Secure Elite": "https://www.worldtrips.com/studentsecure",
+    "ISO Platinum": "https://www.isoa.org/",
+    "ISO Gold": "https://www.isoa.org/",
+    "ISO Silver (Basic)": "https://www.isoa.org/",
+    "ISO Compass PPO": "https://www.isoa.org/",
+    "ISO Secure": "https://www.isoa.org/",
+    "ISO J1 Exchange Plan": "https://www.isoa.org/",
+    "ISO OPTima Plan": "https://www.isoa.org/",
+    "ISO Share (ACA comparable)": "https://www.isoa.org/",
+    "ISO Care (ACA comparable)": "https://www.isoa.org/",
+    "IMG Student Health Advantage Standard": "https://www.imglobal.com/img-insurance/student-health-advantage",
+    "IMG Student Health Advantage Platinum": "https://www.imglobal.com/img-insurance/student-health-advantage",
+    "IMG Patriot Exchange Program": "https://www.imglobal.com/travel-medical-insurance/patriot-exchange-program",
+    "GeoBlue Navigator Student": "https://www.geobluestudents.com/",
+    "ACA Catastrophic Plan": "https://www.healthcare.gov/choose-a-plan/catastrophic-plans/",
+    "Medicaid (HUSKY Health)": "https://portal.ct.gov/dss/healthcare/medicaid-and-medical-assistance/husky-health-program",
+    "CHIP (Children's Health Insurance Program)": "https://www.medicaid.gov/chip/index.html",
+    "Short-term Health Insurance Plan (temporary)": "https://www.healthcare.gov/coverage-options/short-term-limited-duration-insurance/",
+    "Seven Corners Liaison Student": "https://www.sevencorners.com/travel-medical-insurance/international-student/liaison-student",
+    "PSI Bronze Plan": "https://www.psiservice.com/international-student-health-insurance",
+    "PSI Silver Plan": "https://www.psiservice.com/international-student-health-insurance",
+    "PSI Gold Plan (High School)": "https://www.psiservice.com/international-student-health-insurance",
+    "ACA Marketplace Bronze Plan": "https://www.healthcare.gov/choose-a-plan/plan-categories/",
+    "ACA Marketplace Silver Plan": "https://www.healthcare.gov/choose-a-plan/plan-categories/",
+    "ACA Marketplace Gold Plan": "https://www.healthcare.gov/choose-a-plan/plan-categories/",
+    "ACA Marketplace Platinum Plan": "https://www.healthcare.gov/choose-a-plan/plan-categories/",
+    "Parent's Employer Plan (Dependent Coverage)": "https://www.healthcare.gov/young-adults/children-under-26/",
+    "TRICARE Young Adult Prime": "https://tricare.mil/Plans/HealthPlans/TYA",
+    "TRICARE Young Adult Select": "https://tricare.mil/Plans/HealthPlans/TYA",
+    "Cigna Global Student Plan": "https://www.cignaglobal.com/plans/international-student-insurance",
+    "SafetyWing Nomad Insurance": "https://www.safetywing.com/nomad-insurance",
+    "Wellfleet Student Plan (College)": "https://www.wellfleetstudent.com/",
+    "Anthem Student Advantage Plan": "https://studentadvantage.anthem.com/",
+    "UnitedHealthcare Student Resources Plan": "https://www.uhcsr.com/",
+    "Aetna Student Health Plan": "https://www.aetnastudenthealth.com/",
+    "Compass Savings Plan (Economical)": "https://www.compassstudenthealthinsurance.com/",
+    "Compass Sports Plan (with Sports Coverage)": "https://www.compassstudenthealthinsurance.com/",
+    "Gallagher Student Health Plan": "https://www.gallagherstudent.com/",
+    "Florida Blue Student Health Plan": "https://www.floridabluestudentinsurance.com/",
+    "ConnectiCare Health Plan (Connecticut)": "https://www.connecticare.com/",
+    "Spouse/Partner's Employer Health Plan": "https://www.healthcare.gov/married-couples/coverage-through-spouse/",
+    "Medicare (Eligible Student)": "https://www.medicare.gov/",
+}
+
 
 def _clean_value(value):
     if isinstance(value, str):
@@ -140,6 +193,7 @@ def load_plan_catalog() -> list:
             if raw_key in entry:
                 normalized[field_key] = _clean_value(entry[raw_key])
         normalized['plan_name'] = _clean_value(entry.get('plan_name')) or 'Unnamed Plan'
+        normalized['plan_url'] = PLAN_URLS.get(normalized['plan_name'], '')
         normalized['provider'] = _derive_provider(normalized['plan_name'])
         normalized['cities'] = normalized.get('cities', []) or []
         normalized['for_child'] = bool(normalized.get('for_child'))
