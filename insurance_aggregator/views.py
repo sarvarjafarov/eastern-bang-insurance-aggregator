@@ -11,6 +11,7 @@ from .data_loader import (
     filter_plans,
     get_unique_cities,
     load_plan_catalog,
+    load_traffic_stats,
     summarize_plans,
 )
 from .models import (
@@ -230,6 +231,20 @@ def _build_comparison_rows(plans: list, specs: list) -> list:
     return rows
 
 
+def _percent(part: int, total: int) -> int:
+    if not total:
+        return 0
+    return int(round((part / total) * 100))
+
+
+def _pipeline_status(percent: int) -> str:
+    if percent >= 70:
+        return 'healthy'
+    if percent >= 45:
+        return 'watch'
+    return 'risk'
+
+
 def product(request):
     catalog = load_plan_catalog()
     cities = get_unique_cities(catalog) or ['New Haven, CT']
@@ -315,20 +330,33 @@ def contact(request):
 @staff_member_required
 def dashboard(request):
     catalog = load_plan_catalog()
-    plan_count = len(catalog)
-    cities = sorted({city for plan in catalog for city in (plan.get('cities') or [])})
-    city_count = len(cities) or 0
-    adult_ready = sum(1 for plan in catalog if plan.get('for-adult'))
-    child_ready = sum(1 for plan in catalog if plan.get('for-child'))
+    summary = summarize_plans(catalog)
+    plan_count = summary['plan_count']
+    city_count = summary['city_count']
+    adult_ready = summary['adult_ready']
+    child_ready = summary['child_ready']
+    provider_count = summary['provider_count']
 
+    family_ready = sum(1 for plan in catalog if plan.get('supports_family'))
+    gov_programs = sum(1 for plan in catalog if plan.get('is_government'))
+    referral_free = sum(1 for plan in catalog if not plan.get('referral_required'))
+    global_coverage = sum(1 for plan in catalog if 'Global coverage' in plan.get('tags', []))
+    preventive_ready = sum(1 for plan in catalog if plan.get('services_before_deductible'))
+    average_cities = (
+        round(sum(len(plan.get('cities', [])) for plan in catalog) / plan_count, 1)
+        if plan_count
+        else 0
+    )
+
+    top_plan_candidates = sorted(catalog, key=lambda plan: plan.get('rating', 0), reverse=True)[:4]
     top_plans = []
-    for plan in catalog[:4]:
+    for plan in top_plan_candidates:
         plan_cities = ', '.join(plan.get('cities') or ['N/A'])
-        if plan.get('for-adult') and plan.get('for-child'):
+        if plan.get('supports_family'):
             segment = 'Family ready'
-        elif plan.get('for-adult'):
+        elif plan.get('for_adult'):
             segment = 'Adult only'
-        elif plan.get('for-child'):
+        elif plan.get('for_child'):
             segment = 'Child ready'
         else:
             segment = 'Specialty'
@@ -337,36 +365,100 @@ def dashboard(request):
                 'name': plan.get('plan_name'),
                 'cities': plan_cities or 'N/A',
                 'segment': segment,
-                'deductible': _strip_reference(plan.get('overall-deductible', '—')),
-                'oop': _strip_reference(plan.get('out-of-pocket-limit-individual', '—')),
+                'deductible': _strip_reference(plan.get('overall_deductible', '—')),
+                'oop': _strip_reference(plan.get('oop_individual', '—')),
             }
         )
 
     flow_cards = [
-        {'label': 'Active users', 'value': '4.2K', 'change': '+8.1% vs last week'},
-        {'label': 'Qualified leads', 'value': '932', 'change': '+12 new schools'},
-        {'label': 'Plans live', 'value': f'{plan_count}', 'change': 'Dataset refreshed nightly'},
-        {'label': 'Cities tracked', 'value': f'{city_count}', 'change': 'Expansion list ready'},
+        {'label': 'Active plans', 'value': f'{plan_count}', 'change': f'{provider_count} providers'},
+        {
+            'label': 'Cities tracked',
+            'value': f'{city_count}',
+            'change': f"Avg {average_cities:.1f} cities/plan" if plan_count else 'No cities ingested',
+        },
+        {
+            'label': 'Family-ready coverage',
+            'value': f'{family_ready}',
+            'change': f"{_percent(family_ready, plan_count)}% of catalog",
+        },
+        {
+            'label': 'Referral-free access',
+            'value': f'{referral_free}',
+            'change': f"{_percent(referral_free, plan_count)}% allow direct booking",
+        },
     ]
 
     user_segments = [
-        {'title': 'New signups', 'value': '312', 'detail': 'Week to date', 'trend': '+3.2%'},
-        {'title': 'Activated accounts', 'value': '2,841', 'detail': '92% completion', 'trend': '+1.1%'},
-        {'title': 'Campus partners', 'value': '58', 'detail': '9 in onboarding', 'trend': '+14%'},
+        {
+            'title': 'Adult-ready plans',
+            'value': adult_ready,
+            'detail': 'Cover undergraduate & graduate students',
+            'trend': f"{_percent(adult_ready, plan_count)}%",
+        },
+        {
+            'title': 'Child & dependent coverage',
+            'value': child_ready,
+            'detail': 'Meets K-12 or dependent visa waivers',
+            'trend': f"{_percent(child_ready, plan_count)}%",
+        },
+        {
+            'title': 'Public & gov programs',
+            'value': gov_programs,
+            'detail': 'Medicaid, CHIP, TRICARE & more',
+            'trend': f"{_percent(gov_programs, plan_count)}%",
+        },
     ]
+
+    traffic_stats = load_traffic_stats()
+    total_visitors = int(traffic_stats.get('total_visitors') or 0)
+    change_pct = traffic_stats.get('change_pct')
+    raw_sources = traffic_stats.get('sources') or []
+    traffic_sources = []
+    for source in raw_sources:
+        visitors = int(source.get('visitors', 0))
+        traffic_sources.append(
+            {
+                'label': source.get('label', 'Other'),
+                'visitors_display': f"{visitors:,}",
+                'share': _percent(visitors, total_visitors),
+            }
+        )
+    traffic_summary = {
+        'period': traffic_stats.get('period', 'Last 30 days'),
+        'updated': traffic_stats.get('updated'),
+        'total_visitors': f"{total_visitors:,}",
+        'sources': traffic_sources,
+        'change_display': f"{change_pct:+.0%}" if isinstance(change_pct, (int, float)) else None,
+        'change_positive': bool(isinstance(change_pct, (int, float)) and change_pct >= 0),
+    }
+
+    funnel = traffic_stats.get('funnel') or {}
+    funnel_base = funnel.get('visitors') or total_visitors or max(funnel.values(), default=0)
+    funnel_stages = [
+        ('Acquisition', 'visitors', 'Unique visitors captured'),
+        ('Plan profile views', 'profiles', 'Students exploring plan details'),
+        ('Comparisons opened', 'comparisons', 'Side-by-side comparisons run'),
+        ('Checkout intent', 'checkouts', 'Clicks to insurer checkout'),
+    ]
+    pipeline = []
+    for label, key, caption in funnel_stages:
+        count = int(funnel.get(key, 0))
+        percent = _percent(count, funnel_base)
+        pipeline.append(
+            {
+                'stage': label,
+                'value': f'{percent}%',
+                'detail': f"{count:,} sessions · {caption}",
+                'status': _pipeline_status(percent),
+            }
+        )
 
     recent_users = [
         {'name': 'Esther Howard', 'email': 'esther@yale.edu', 'region': 'US · CT', 'plan': 'Yale SHP', 'status': 'Verified'},
         {'name': 'Diego Flores', 'email': 'diego@mit.edu', 'region': 'US · MA', 'plan': 'MIT Classic', 'status': 'Pending docs'},
         {'name': 'Jun Park', 'email': 'jun.park@rice.edu', 'region': 'US · TX', 'plan': 'Rice Guardian', 'status': 'Active'},
         {'name': 'Ava Thompson', 'email': 'ava.t@columbia.edu', 'region': 'US · NY', 'plan': 'Columbia Core', 'status': 'Trial'},
-    ]
-
-    pipeline = [
-        {'stage': 'Acquisition', 'value': '68%', 'status': 'healthy', 'detail': 'Paid + content mix'},
-        {'stage': 'Eligibility review', 'value': '54%', 'status': 'watch', 'detail': 'Docs queue up 6 hrs'},
-        {'stage': 'Plan comparison', 'value': '82%', 'status': 'healthy', 'detail': 'New filters driving usage'},
-        {'stage': 'Checkout', 'value': '34%', 'status': 'risk', 'detail': 'Payment partner SLA investigating'},
     ]
 
     operations_feed = [
@@ -377,9 +469,21 @@ def dashboard(request):
     ]
 
     product_health = [
-        {'title': 'Coverage freshness', 'value': '99.2%', 'detail': 'Last import 35m ago'},
-        {'title': 'Eligibility accuracy', 'value': '97%', 'detail': 'Manual QA sample this AM'},
-        {'title': 'Support SLA', 'value': '12m', 'detail': 'Median first reply'},
+        {
+            'title': 'Preventive care at $0',
+            'value': f"{_percent(preventive_ready, plan_count)}%",
+            'detail': f"{preventive_ready} plans cover preventive benefits before the deductible.",
+        },
+        {
+            'title': 'Referral-free specialists',
+            'value': f"{_percent(referral_free, plan_count)}%",
+            'detail': f"{referral_free} plans allow seeing specialists without referrals.",
+        },
+        {
+            'title': 'Global & nomad coverage',
+            'value': f"{_percent(global_coverage, plan_count)}%",
+            'detail': f"{global_coverage} plans highlight worldwide reach or nomad benefits.",
+        },
     ]
 
     context = {
@@ -394,5 +498,6 @@ def dashboard(request):
         'operations_feed': operations_feed,
         'product_health': product_health,
         'top_plans': top_plans,
+        'traffic_summary': traffic_summary,
     }
     return render(request, 'dashboard.html', context)

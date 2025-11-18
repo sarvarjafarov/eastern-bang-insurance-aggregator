@@ -1,0 +1,19 @@
+{
+  "period": "Last 30 days",
+  "updated": "2024-07-15T08:00:00Z",
+  "total_visitors": 18942,
+  "change_pct": 0.14,
+  "sources": [
+    { "label": "Organic Search", "visitors": 8640 },
+    { "label": "Direct", "visitors": 5180 },
+    { "label": "Referral Partners", "visitors": 2385 },
+    { "label": "Paid Campaigns", "visitors": 1890 },
+    { "label": "Email", "visitors": 847 }
+  ],
+  "funnel": {
+    "visitors": 18942,
+    "profiles": 11480,
+    "comparisons": 8123,
+    "checkouts": 3129
+  }
+}
