@@ -3,17 +3,24 @@ from types import SimpleNamespace
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import OperationalError, ProgrammingError
-from django.shortcuts import render
+from django.http import Http404
+from django.shortcuts import redirect, render
 from django.templatetags.static import static
+from django.utils import timezone
 
-from .data_loader import (
-    comparison_fields,
-    filter_plans,
-    get_unique_cities,
-    load_plan_catalog,
-    load_traffic_stats,
-    summarize_plans,
+from .analytics import (
+    record_metric,
+    record_metric_once,
+    track_acquisition,
+    get_metric_total,
+    get_metric_change_ratio,
+    summarize_sources,
+    record_plan_impressions,
+    record_plan_click,
+    get_plan_impression_totals,
+    get_plan_click_totals,
 )
+from .data_loader import comparison_fields, filter_plans, get_plan_by_id, get_unique_cities, load_plan_catalog, summarize_plans
 from .models import (
     AboutPageContent,
     AudienceSegment,
@@ -109,6 +116,7 @@ def _default_partners():
 
 
 def home(request):
+    track_acquisition(request)
     try:
         home_page = HomePageContent.objects.prefetch_related('features', 'stats').first()
     except (OperationalError, ProgrammingError):
@@ -148,6 +156,7 @@ def home(request):
 
 
 def about(request):
+    track_acquisition(request)
     try:
         about_page = AboutPageContent.objects.prefetch_related('values').first()
     except (OperationalError, ProgrammingError):
@@ -246,9 +255,11 @@ def _pipeline_status(percent: int) -> str:
 
 
 def product(request):
+    track_acquisition(request)
     catalog = load_plan_catalog()
     cities = get_unique_cities(catalog) or ['New Haven, CT']
     member_options, default_member = _member_options_with_defaults()
+    record_metric_once(request, 'plan_profile_view')
 
     selected_member = _sanitize_member_choice(
         request.GET.get('member', default_member),
@@ -267,6 +278,7 @@ def product(request):
         fallback_to_all = True
 
     featured_plans = filtered[:4]
+    record_plan_impressions(featured_plans)
     comparison_plans = filtered[:3]
     field_specs = comparison_fields()
     comparison_rows = _build_comparison_rows(comparison_plans, field_specs)
@@ -279,6 +291,8 @@ def product(request):
     plan_summary_secondary = (
         f"{summary['child_ready']} cover dependents · {summary['adult_ready']} adult-ready"
     )
+    if request.GET:
+        record_metric_once(request, 'comparison_engaged')
 
     try:
         product_content = ProductPageContent.objects.first()
@@ -312,6 +326,7 @@ def product(request):
 
 
 def contact(request):
+    track_acquisition(request)
     submitted = request.method == 'POST'
     try:
         contact_content = ContactPageContent.objects.first()
@@ -347,28 +362,6 @@ def dashboard(request):
         if plan_count
         else 0
     )
-
-    top_plan_candidates = sorted(catalog, key=lambda plan: plan.get('rating', 0), reverse=True)[:4]
-    top_plans = []
-    for plan in top_plan_candidates:
-        plan_cities = ', '.join(plan.get('cities') or ['N/A'])
-        if plan.get('supports_family'):
-            segment = 'Family ready'
-        elif plan.get('for_adult'):
-            segment = 'Adult only'
-        elif plan.get('for_child'):
-            segment = 'Child ready'
-        else:
-            segment = 'Specialty'
-        top_plans.append(
-            {
-                'name': plan.get('plan_name'),
-                'cities': plan_cities or 'N/A',
-                'segment': segment,
-                'deductible': _strip_reference(plan.get('overall_deductible', '—')),
-                'oop': _strip_reference(plan.get('oop_individual', '—')),
-            }
-        )
 
     flow_cards = [
         {'label': 'Active plans', 'value': f'{plan_count}', 'change': f'{provider_count} providers'},
@@ -410,41 +403,23 @@ def dashboard(request):
         },
     ]
 
-    traffic_stats = load_traffic_stats()
-    total_visitors = int(traffic_stats.get('total_visitors') or 0)
-    change_pct = traffic_stats.get('change_pct')
-    raw_sources = traffic_stats.get('sources') or []
-    traffic_sources = []
-    for source in raw_sources:
-        visitors = int(source.get('visitors', 0))
-        traffic_sources.append(
-            {
-                'label': source.get('label', 'Other'),
-                'visitors_display': f"{visitors:,}",
-                'share': _percent(visitors, total_visitors),
-            }
-        )
-    traffic_summary = {
-        'period': traffic_stats.get('period', 'Last 30 days'),
-        'updated': traffic_stats.get('updated'),
-        'total_visitors': f"{total_visitors:,}",
-        'sources': traffic_sources,
-        'change_display': f"{change_pct:+.0%}" if isinstance(change_pct, (int, float)) else None,
-        'change_positive': bool(isinstance(change_pct, (int, float)) and change_pct >= 0),
-    }
+    acquisition_total = get_metric_total('acquisition')
+    plan_views_total = get_metric_total('plan_profile_view')
+    comparison_total = get_metric_total('comparison_engaged')
+    checkout_total = get_metric_total('checkout_intent')
 
-    funnel = traffic_stats.get('funnel') or {}
-    funnel_base = funnel.get('visitors') or total_visitors or max(funnel.values(), default=0)
-    funnel_stages = [
-        ('Acquisition', 'visitors', 'Unique visitors captured'),
-        ('Plan profile views', 'profiles', 'Students exploring plan details'),
-        ('Comparisons opened', 'comparisons', 'Side-by-side comparisons run'),
-        ('Checkout intent', 'checkouts', 'Clicks to insurer checkout'),
-    ]
     pipeline = []
-    for label, key, caption in funnel_stages:
-        count = int(funnel.get(key, 0))
-        percent = _percent(count, funnel_base)
+    pipeline_specs = [
+        ('Acquisition', acquisition_total, acquisition_total, 'Unique visitors captured'),
+        ('Plan profile views', plan_views_total, acquisition_total, 'Students exploring plan details'),
+        ('Comparisons opened', comparison_total, plan_views_total, 'Side-by-side comparisons run'),
+        ('Checkout intent', checkout_total, comparison_total, 'Clicks to insurer checkout'),
+    ]
+    for label, count, baseline, caption in pipeline_specs:
+        if label == 'Acquisition':
+            percent = 100 if count else 0
+        else:
+            percent = _percent(count, baseline)
         pipeline.append(
             {
                 'stage': label,
@@ -486,6 +461,42 @@ def dashboard(request):
         },
     ]
 
+    source_breakdown = summarize_sources(acquisition_total)
+    change_ratio = get_metric_change_ratio('acquisition')
+    traffic_summary = {
+        'period': 'All time',
+        'updated': timezone.now().strftime('%Y-%m-%d %H:%M'),
+        'total_visitors': f"{acquisition_total:,}",
+        'sources': source_breakdown,
+        'change_display': f"{change_ratio:+.0%}" if change_ratio is not None else None,
+        'change_positive': change_ratio >= 0 if change_ratio is not None else None,
+    }
+
+    plan_engagement = []
+    impression_totals = get_plan_impression_totals()
+    click_totals = get_plan_click_totals()
+    for plan in catalog:
+        plan_id = plan.get('plan_id')
+        if plan_id is None:
+            continue
+        impressions = impression_totals.get(plan_id, 0)
+        clicks = click_totals.get(plan_id, 0)
+        if not impressions and not clicks:
+            continue
+        ctr = round((clicks / impressions) * 100) if impressions else 0
+        plan_engagement.append(
+            {
+                'plan_name': plan.get('plan_name'),
+                'cities': plan.get('cities_display') or 'N/A',
+                'segment': plan.get('audience_label'),
+                'impressions': impressions,
+                'clicks': clicks,
+                'ctr': ctr,
+            }
+        )
+    plan_engagement.sort(key=lambda entry: (entry['clicks'], entry['impressions']), reverse=True)
+    plan_engagement = plan_engagement[:4]
+
     context = {
         'plan_count': plan_count,
         'city_count': city_count,
@@ -497,7 +508,23 @@ def dashboard(request):
         'pipeline': pipeline,
         'operations_feed': operations_feed,
         'product_health': product_health,
-        'top_plans': top_plans,
         'traffic_summary': traffic_summary,
+        'plan_engagement': plan_engagement,
     }
     return render(request, 'dashboard.html', context)
+
+
+def plan_redirect(request, plan_id: str):
+    try:
+        plan_index = int(plan_id)
+    except (TypeError, ValueError):
+        raise Http404('Plan not found')
+
+    plan = get_plan_by_id(plan_index)
+    if not plan or not plan.get('plan_url'):
+        raise Http404('Plan not available for redirect')
+
+    record_metric_once(request, 'checkout_intent')
+    record_metric('checkout_click')
+    record_plan_click(plan_index)
+    return redirect(plan['plan_url'])

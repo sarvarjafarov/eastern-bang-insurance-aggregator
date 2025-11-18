@@ -24,6 +24,7 @@ urlpatterns = [
     path('about/', views.about, name='about'),
     path('product/', views.product, name='product'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('plans/go/<int:plan_id>/', views.plan_redirect, name='plan_redirect'),
     path('contact/', views.contact, name='contact'),
     path('admin/', admin.site.urls),
 ]

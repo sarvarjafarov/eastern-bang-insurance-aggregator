@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static humanize %}
 
 {% block title %}Operations Dashboard | Insurance Buddy{% endblock %}
 
@@ -230,77 +230,44 @@
         </div>
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-2">
-        <div class="bg-white rounded-3xl shadow-floating border border-brand/5 p-6">
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <p class="text-sm uppercase tracking-wide text-brand/50">Product data</p>
-                    <h2 class="text-xl font-semibold text-brand">Top tracked plans</h2>
-                </div>
-                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand/5 text-brand">{{ plan_count }} plans total</span>
+    {% if plan_engagement %}
+    <div class="bg-white rounded-3xl shadow-floating border border-brand/5 p-6">
+        <div class="flex items-center justify-between mb-5">
+            <div>
+                <p class="text-sm uppercase tracking-wide text-brand/50">Product insights</p>
+                <h2 class="text-xl font-semibold text-brand">Plan engagement</h2>
             </div>
-            <div class="space-y-4">
-                {% for plan in top_plans %}
-                <div class="p-4 rounded-2xl border border-brand/5 bg-brand/2">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="font-semibold text-brand">{{ plan.name }}</p>
-                            <p class="text-sm text-brand/60">{{ plan.cities }}</p>
-                        </div>
-                        <span class="text-xs font-semibold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700">{{ plan.segment }}</span>
-                    </div>
-                    <div class="mt-3 grid grid-cols-2 gap-3 text-sm text-brand/70">
-                        <p>Deductible<br><span class="text-brand font-semibold">{{ plan.deductible }}</span></p>
-                        <p>OOP limit<br><span class="text-brand font-semibold">{{ plan.oop }}</span></p>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand/5 text-brand">Top performers</span>
         </div>
-
-        <div class="bg-white rounded-3xl shadow-floating border border-brand/5 p-6">
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <p class="text-sm uppercase tracking-wide text-brand/50">Action queue</p>
-                    <h2 class="text-xl font-semibold text-brand">What needs attention</h2>
-                </div>
-                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand/5 text-brand">5 open loops</span>
-            </div>
-            <ul class="space-y-4">
-                <li class="flex items-start gap-3">
-                    <span class="mt-1 h-2 w-2 rounded-full bg-rose-500"></span>
-                    <div>
-                        <p class="font-medium text-brand">Checkout drop detected on mobile</p>
-                        <p class="text-sm text-brand/60">Sessions w/ older Safari. Engineering triaging PSP fallback.</p>
-                    </div>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-rose-50 text-rose-600">Priority</span>
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="mt-1 h-2 w-2 rounded-full bg-amber-500"></span>
-                    <div>
-                        <p class="font-medium text-brand">Docs backlog approaching SLA</p>
-                        <p class="text-sm text-brand/60">Eligibility review queue at 54%. Add second shift helper.</p>
-                    </div>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-600">Watch</span>
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
-                    <div>
-                        <p class="font-medium text-brand">Columbia SIPA onboarding</p>
-                        <p class="text-sm text-brand/60">Training toolkit approved. Go-live scheduled for Thursday.</p>
-                    </div>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">On track</span>
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="mt-1 h-2 w-2 rounded-full bg-indigo-500"></span>
-                    <div>
-                        <p class="font-medium text-brand">Plan builder v2 experiment</p>
-                        <p class="text-sm text-brand/60">Awaiting analytics review of new filter interactions.</p>
-                    </div>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-700">In review</span>
-                </li>
-            </ul>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm divide-y divide-brand/10">
+                <thead class="bg-brand/5 text-brand/60">
+                    <tr>
+                        <th class="px-4 py-3 text-left font-medium">Plan</th>
+                        <th class="px-4 py-3 text-left font-medium">Segment</th>
+                        <th class="px-4 py-3 text-left font-medium">Impressions</th>
+                        <th class="px-4 py-3 text-left font-medium">Clicks</th>
+                        <th class="px-4 py-3 text-left font-medium">CTR</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-brand/10 text-brand">
+                    {% for insight in plan_engagement %}
+                    <tr>
+                        <td class="px-4 py-4">
+                            <p class="font-semibold">{{ insight.plan_name }}</p>
+                            <p class="text-xs text-brand/60">{{ insight.cities }}</p>
+                        </td>
+                        <td class="px-4 py-4 text-sm text-brand/70">{{ insight.segment }}</td>
+                        <td class="px-4 py-4 text-sm font-semibold">{{ insight.impressions|intcomma }}</td>
+                        <td class="px-4 py-4 text-sm font-semibold">{{ insight.clicks|intcomma }}</td>
+                        <td class="px-4 py-4 text-sm font-semibold">{{ insight.ctr }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
+    {% endif %}
+
 </section>
 {% endblock %}

@@ -132,7 +132,7 @@
                     {% endfor %}
                 </div>
                 {% if plan.plan_url %}
-                <a class="gradient-button w-full mt-6" href="{{ plan.plan_url }}" target="_blank" rel="noopener noreferrer">Select Plan</a>
+                <a class="gradient-button w-full mt-6" href="{% url 'plan_redirect' plan.plan_id %}" target="_blank" rel="noopener noreferrer">Select Plan</a>
                 <p class="text-xs text-brand/50 text-center mt-2">Opens the insurer&#39;s site in a new tab.</p>
                 {% else %}
                 <button class="gradient-button w-full mt-6 select-plan-btn" type="button">Select Plan</button>

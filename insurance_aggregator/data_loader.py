@@ -7,7 +7,6 @@ from typing import Optional
 from django.conf import settings
 
 DATA_PATH = Path(settings.BASE_DIR) / 'insurance_aggregator' / 'static' / 'data' / 'plans.json'
-TRAFFIC_DATA_PATH = Path(settings.BASE_DIR) / 'insurance_aggregator' / 'static' / 'data' / 'traffic.json'
 
 CONTENT_REF_PATTERN = re.compile(r':contentReference\[[^\]]+\]\{[^}]+\}')
 
@@ -92,8 +91,6 @@ PLAN_URLS = {
 
 _PLAN_CACHE = {'mtime': None, 'data': None}
 _PLAN_LOCK = Lock()
-_TRAFFIC_CACHE = {'mtime': None, 'data': None}
-_TRAFFIC_LOCK = Lock()
 
 
 def _clean_value(value):
@@ -201,13 +198,14 @@ def _load_plan_raw() -> list:
             raw = json.load(source)
 
         catalog = []
-        for entry in raw:
+        for index, entry in enumerate(raw):
             normalized = {}
             for raw_key, field_key in FIELD_MAP.items():
                 if raw_key in entry:
                     normalized[field_key] = _clean_value(entry[raw_key])
             normalized['plan_name'] = _clean_value(entry.get('plan_name')) or 'Unnamed Plan'
             normalized['plan_url'] = PLAN_URLS.get(normalized['plan_name'], '')
+            normalized['plan_id'] = index
             normalized['provider'] = _derive_provider(normalized['plan_name'])
             normalized['cities'] = normalized.get('cities', []) or []
             normalized['for_child'] = bool(normalized.get('for_child'))
@@ -232,28 +230,11 @@ def load_plan_catalog() -> list:
     return list(_load_plan_raw())
 
 
-def load_traffic_stats() -> dict:
-    try:
-        mtime = TRAFFIC_DATA_PATH.stat().st_mtime
-    except FileNotFoundError:
-        return {'period': 'Last 30 days', 'total_visitors': 0, 'sources': [], 'funnel': {}}
-
-    with _TRAFFIC_LOCK:
-        if _TRAFFIC_CACHE['data'] is not None and _TRAFFIC_CACHE['mtime'] == mtime:
-            return _TRAFFIC_CACHE['data']
-
-        with TRAFFIC_DATA_PATH.open() as source:
-            payload = json.load(source)
-
-        payload.setdefault('period', 'Last 30 days')
-        payload.setdefault('total_visitors', 0)
-        payload.setdefault('sources', [])
-        payload.setdefault('funnel', {})
-        payload.setdefault('change_pct', 0)
-
-        _TRAFFIC_CACHE['mtime'] = mtime
-        _TRAFFIC_CACHE['data'] = payload
-        return payload
+def get_plan_by_id(plan_id: int) -> Optional[dict]:
+    catalog = _load_plan_raw()
+    if 0 <= plan_id < len(catalog):
+        return catalog[plan_id]
+    return None
 
 
 def _build_audience_label(plan: dict) -> str:

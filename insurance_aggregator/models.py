@@ -141,3 +141,16 @@ class ContactPageContent(TimeStampedModel):
 
     def __str__(self):
         return 'Contact Page Content'
+
+
+class DailyMetric(TimeStampedModel):
+    date = models.DateField()
+    metric = models.CharField(max_length=120)
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('date', 'metric')
+        ordering = ['-date', 'metric']
+
+    def __str__(self):
+        return f"{self.metric} · {self.date} · {self.count}"
