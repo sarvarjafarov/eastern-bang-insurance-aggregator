@@ -653,6 +653,22 @@ def abtest_endpoint(request):
             <ul>{names_list}</ul>
             <button id="abtest">{variant}</button>
         </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {{
+                var btn = document.getElementById('abtest');
+                if (!btn) return;
+                btn.addEventListener('click', function() {{
+                    // Lightweight click tracking for analytics tools already on the page.
+                    if (typeof gtag === 'function') {{
+                        gtag('event', 'abtest_click', {{ variant: '{variant}' }});
+                    }}
+                    if (typeof ym === 'function') {{
+                        ym({YANDEX_METRICA_ID}, 'reachGoal', 'abtest_click', {{ variant: '{variant}' }});
+                    }}
+                    btn.innerText = '{variant} ✨';
+                }});
+            }});
+        </script>
     </body>
     </html>
     """
