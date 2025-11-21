@@ -45,7 +45,14 @@ MEMBER_OPTIONS = [
 
 DEFAULT_AGE = 24
 TRAFFIC_API_KEY = os.environ.get('TRAFFIC_API_KEY')
-TEAM_NICKNAMES = ['eastern-bang']
+TEAM_NICKNAMES = [
+    nickname.strip()
+    for nickname in os.environ.get('TEAM_NICKNAMES', 'cheerful-newt, careful-deer').split(',')
+    if nickname.strip()
+]
+# Default to the IDs already used on the main site so analytics remain consistent.
+GA_MEASUREMENT_ID = os.environ.get('GA_MEASUREMENT_ID', 'G-2EYT060RY4')
+YANDEX_METRICA_ID = os.environ.get('YANDEX_METRICA_ID', '105393946')
 
 
 def _strip_reference(value):
@@ -592,6 +599,34 @@ def abtest_endpoint(request):
     record_metric(f'abtest_variant_{variant}')
 
     names_list = ''.join(f'<li>{name}</li>' for name in TEAM_NICKNAMES)
+    ga_script = ''
+    if GA_MEASUREMENT_ID:
+        ga_script = f"""
+        <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){{dataLayer.push(arguments);}}
+            gtag('js', new Date());
+            gtag('config', '{GA_MEASUREMENT_ID}');
+        </script>
+        """
+
+    ym_script = ''
+    if YANDEX_METRICA_ID:
+        ym_script = f"""
+        <script type="text/javascript">
+            (function(m,e,t,r,i,k,a){{m[i]=m[i]||function(){{(m[i].a=m[i].a||[]).push(arguments)}};
+            m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a);}})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+            ym({YANDEX_METRICA_ID}, "init", {{
+                clickmap:true,
+                trackLinks:true,
+                accurateTrackBounce:true
+            }});
+        </script>
+        <noscript><div><img src="https://mc.yandex.ru/watch/{YANDEX_METRICA_ID}" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+        """
+
     html = f"""
     <!doctype html>
     <html lang="en">
@@ -607,6 +642,8 @@ def abtest_endpoint(request):
             button:hover {{ background: #0b1224; }}
             .card {{ background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-top: 24px; }}
         </style>
+        {ga_script}
+        {ym_script}
     </head>
     <body>
         <h1>eastern-bang A/B Test Endpoint</h1>

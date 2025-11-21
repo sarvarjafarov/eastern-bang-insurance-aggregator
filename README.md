@@ -25,6 +25,9 @@ The app reads configuration from the environment with sensible local defaults:
 - `DATABASE_URL`: SQLite by default; Render injects the Postgres URL automatically via `render.yaml`.
 - `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_PASSWORD`, `DJANGO_SUPERUSER_EMAIL`: optional helpers for non-interactive admin creation (see below).
 - `TRAFFIC_API_KEY`: optional shared secret for the `/api/traffic` ingest endpoint. Leave empty locally to disable the check.
+- `TEAM_NICKNAMES`: comma-separated list of nicknames to display on the standardized analytics page (defaults to `cheerful-newt, careful-deer`).
+- `GA_MEASUREMENT_ID`: optional Google Analytics measurement ID for the standardized analytics page.
+- `YANDEX_METRICA_ID`: optional Yandex Metrica counter ID for the standardized analytics page.
 
 Copy `.env.example` to `.env` for local overrides if you are using a virtualenv.
 
@@ -67,4 +70,4 @@ curl -X POST http://localhost:8000/api/traffic/ \
 
 ## Standardized analytics endpoint
 
-A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-bang")`). It lists the team nickname and renders a button with id `abtest` whose label alternates between “kudos” and “thanks”; page views and variant assignments are recorded via the internal metrics system.
+A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-bang")`). It lists your configured team nicknames and renders a button with id `abtest` whose label alternates between “kudos” and “thanks”; page views and variant assignments are recorded via the internal metrics system, and you can also attach Google Analytics or Yandex Metrica by setting `GA_MEASUREMENT_ID` or `YANDEX_METRICA_ID`.
