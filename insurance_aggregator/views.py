@@ -1,12 +1,17 @@
+import json
+import os
+from datetime import date
 from typing import Optional
 from types import SimpleNamespace
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import OperationalError, ProgrammingError
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from .analytics import (
     record_metric,
@@ -38,6 +43,7 @@ MEMBER_OPTIONS = [
 ]
 
 DEFAULT_AGE = 24
+TRAFFIC_API_KEY = os.environ.get('TRAFFIC_API_KEY')
 
 
 def _strip_reference(value):
@@ -512,6 +518,65 @@ def dashboard(request):
         'plan_engagement': plan_engagement,
     }
     return render(request, 'dashboard.html', context)
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def traffic_ingest(request):
+    if TRAFFIC_API_KEY:
+        provided_key = request.headers.get('X-Api-Key')
+        if provided_key != TRAFFIC_API_KEY:
+            return JsonResponse({'detail': 'Forbidden'}, status=403)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'detail': 'Invalid JSON payload'}, status=400)
+
+    raw_event = payload.get('event')
+    event = str(raw_event).strip() if raw_event not in (None, '') else ''
+    raw_source = payload.get('source')
+    source = str(raw_source).strip() if raw_source not in (None, '') else ''
+    count = payload.get('count', 1)
+    raw_date = payload.get('date')
+
+    if not event:
+        event = 'acquisition'
+
+    try:
+        count_value = int(count)
+    except (TypeError, ValueError):
+        return JsonResponse({'detail': 'count must be an integer'}, status=400)
+    if count_value <= 0:
+        return JsonResponse({'detail': 'count must be greater than zero'}, status=400)
+
+    if len(event) > 120:
+        return JsonResponse({'detail': 'event must be 120 characters or fewer'}, status=400)
+    max_source_length = 120 - len(SOURCE_PREFIX)
+    if source and len(source) > max_source_length:
+        return JsonResponse({'detail': f'source must be {max_source_length} characters or fewer'}, status=400)
+
+    target_date = None
+    if raw_date:
+        try:
+            target_date = date.fromisoformat(raw_date)
+        except (TypeError, ValueError):
+            return JsonResponse({'detail': 'date must be in YYYY-MM-DD format'}, status=400)
+
+    record_metric(event, amount=count_value, date=target_date)
+    if source:
+        record_metric(f'{SOURCE_PREFIX}{source}', amount=count_value, date=target_date)
+
+    return JsonResponse(
+        {
+            'status': 'ok',
+            'metric': event,
+            'source': source or None,
+            'count': count_value,
+            'date': target_date.isoformat() if target_date else None,
+        },
+        status=201,
+    )
 
 
 def plan_redirect(request, plan_id: str):

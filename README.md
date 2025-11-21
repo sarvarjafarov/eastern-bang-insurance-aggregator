@@ -24,6 +24,7 @@ The app reads configuration from the environment with sensible local defaults:
 - `DJANGO_ALLOWED_HOSTS`: comma-separated hostnames. When unset, local hosts are used and Render falls back to `RENDER_EXTERNAL_HOSTNAME`.
 - `DATABASE_URL`: SQLite by default; Render injects the Postgres URL automatically via `render.yaml`.
 - `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_PASSWORD`, `DJANGO_SUPERUSER_EMAIL`: optional helpers for non-interactive admin creation (see below).
+- `TRAFFIC_API_KEY`: optional shared secret for the `/api/traffic` ingest endpoint. Leave empty locally to disable the check.
 
 Copy `.env.example` to `.env` for local overrides if you are using a virtualenv.
 
@@ -46,3 +47,20 @@ The Django admin lives at `/admin/`.
 - Locally, create a superuser with `python manage.py createsuperuser` or populate the `DJANGO_SUPERUSER_*` variables and run `python manage.py create_default_superuser`.
 - In Render, the deploy hook runs `python manage.py create_default_superuser` automatically; make sure `DJANGO_SUPERUSER_USERNAME` and `DJANGO_SUPERUSER_PASSWORD` are set in the service settings.
 - The blueprint and `.env.example` currently seed the admin account with username `admin` and password `admin`. Change these values immediately in production to keep the instance secure.
+
+## Traffic ingest endpoint
+
+External systems can send traffic events to `POST /api/traffic/` with a JSON body:
+
+```bash
+curl -X POST http://localhost:8000/api/traffic/ \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: $TRAFFIC_API_KEY" \
+  -d '{"event": "acquisition", "source": "kyle-system", "count": 5, "date": "2024-11-21"}'
+```
+
+- `event` defaults to `acquisition` if omitted.
+- `source` (optional) is stored under the `source:` metric prefix for dashboard breakdowns.
+- `count` defaults to `1` and must be a positive integer.
+- `date` (optional) lets you backfill in `YYYY-MM-DD` format; otherwise, today is used.
+- If `TRAFFIC_API_KEY` is set, requests must provide it in the `X-Api-Key` header.
