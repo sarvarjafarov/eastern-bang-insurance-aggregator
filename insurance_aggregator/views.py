@@ -1,12 +1,13 @@
 import json
 import os
+import random
 from datetime import date
 from typing import Optional
 from types import SimpleNamespace
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import OperationalError, ProgrammingError
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.utils import timezone
@@ -44,6 +45,7 @@ MEMBER_OPTIONS = [
 
 DEFAULT_AGE = 24
 TRAFFIC_API_KEY = os.environ.get('TRAFFIC_API_KEY')
+TEAM_NICKNAMES = ['eastern-bang']
 
 
 def _strip_reference(value):
@@ -577,6 +579,47 @@ def traffic_ingest(request):
         },
         status=201,
     )
+
+
+def abtest_endpoint(request):
+    variant = request.session.get('abtest_variant')
+    if variant not in ('kudos', 'thanks'):
+        variant = random.choice(['kudos', 'thanks'])
+        request.session['abtest_variant'] = variant
+        request.session.modified = True
+
+    record_metric('abtest_page_view')
+    record_metric(f'abtest_variant_{variant}')
+
+    names_list = ''.join(f'<li>{name}</li>' for name in TEAM_NICKNAMES)
+    html = f"""
+    <!doctype html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>eastern-bang · A/B test</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; max-width: 720px; margin: 48px auto; padding: 0 16px; color: #0f172a; }}
+            h1 {{ font-size: 28px; margin-bottom: 8px; }}
+            p {{ color: #475569; }}
+            ul {{ padding-left: 20px; }}
+            button {{ background: #0f172a; color: #fff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; }}
+            button:hover {{ background: #0b1224; }}
+            .card {{ background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-top: 24px; }}
+        </style>
+    </head>
+    <body>
+        <h1>eastern-bang A/B Test Endpoint</h1>
+        <p>This page is publicly accessible and used for analytics testing.</p>
+        <div class="card">
+            <h3>Team member nicknames</h3>
+            <ul>{names_list}</ul>
+            <button id="abtest">{variant}</button>
+        </div>
+    </body>
+    </html>
+    """
+    return HttpResponse(html)
 
 
 def plan_redirect(request, plan_id: str):

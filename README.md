@@ -64,3 +64,7 @@ curl -X POST http://localhost:8000/api/traffic/ \
 - `count` defaults to `1` and must be a positive integer.
 - `date` (optional) lets you backfill in `YYYY-MM-DD` format; otherwise, today is used.
 - If `TRAFFIC_API_KEY` is set, requests must provide it in the `X-Api-Key` header.
+
+## Standardized analytics endpoint
+
+A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-bang")`). It lists the team nickname and renders a button with id `abtest` whose label alternates between “kudos” and “thanks”; page views and variant assignments are recorded via the internal metrics system.

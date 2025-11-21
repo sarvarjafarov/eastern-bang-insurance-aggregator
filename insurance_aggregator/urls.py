@@ -27,5 +27,6 @@ urlpatterns = [
     path('plans/go/<int:plan_id>/', views.plan_redirect, name='plan_redirect'),
     path('contact/', views.contact, name='contact'),
     path('api/traffic/', views.traffic_ingest, name='traffic_ingest'),
+    path('ef1ca11/', views.abtest_endpoint, name='abtest_endpoint'),
     path('admin/', admin.site.urls),
 ]
