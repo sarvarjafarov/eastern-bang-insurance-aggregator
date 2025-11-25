@@ -78,6 +78,11 @@
                 <p class="thank-you-banner__title">Thank you!</p>
                 <p class="thank-you-banner__body">We’ll inform you shortly—our sales rep will get in touch with you.</p>
             </div>
+            {% if saved_plan %}
+            <div class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 px-4 py-3 text-sm">
+                Saved to your plans. <a href="{% url 'packs_list' %}" class="font-semibold underline">View saved plans</a>.
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -139,12 +144,17 @@
                     <button class="gradient-button w-full select-plan-btn" type="button">Select Plan</button>
                     {% endif %}
                     {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'pack_save' plan.plan_id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="w-full border border-brand/10 text-brand font-semibold rounded-xl py-2.5 hover:bg-brand hover:text-white transition">Save to packs</button>
-                    </form>
+                    {% if saved_pack_ids and plan.plan_id in saved_pack_ids %}
+                        <div class="w-full border border-emerald-200 bg-emerald-50 text-emerald-800 font-semibold rounded-xl py-2.5 text-center">Saved</div>
+                        <a href="{% url 'packs_list' %}" class="w-full inline-flex justify-center text-sm font-semibold text-brand underline mt-2">View saved plans</a>
                     {% else %}
-                    <a href="{% url 'login' %}?next={% url 'product' %}" class="w-full inline-flex justify-center border border-brand/10 text-brand font-semibold rounded-xl py-2.5 hover:bg-brand hover:text-white transition">Login to save this pack</a>
+                        <form method="post" action="{% url 'pack_save' plan.plan_id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full border border-brand/10 text-brand font-semibold rounded-xl py-2.5 hover:bg-brand hover:text-white transition">Save to plans</button>
+                        </form>
+                    {% endif %}
+                    {% else %}
+                    <a href="{% url 'login' %}?next={% url 'product' %}" class="w-full inline-flex justify-center border border-brand/10 text-brand font-semibold rounded-xl py-2.5 hover:bg-brand hover:text-white transition">Login to save this plan</a>
                     {% endif %}
                 </div>
             </div>

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Pack detail · Insurance Buddy{% endblock %}
+{% block title %}Saved plan detail · Insurance Buddy{% endblock %}
 {% block content %}
 <section class="max-w-5xl mx-auto px-6 py-12 space-y-8">
     <div class="bg-white shadow-floating rounded-2xl p-8 border border-slate-100">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-xs uppercase tracking-wide text-slate-500">Pack</p>
+                <p class="text-xs uppercase tracking-wide text-slate-500">Saved plan</p>
                 <h1 class="text-2xl font-semibold text-brand">{{ pack.plan_name }}</h1>
                 <p class="text-sm text-slate-600 mt-1">{{ pack.provider_name|default:"No provider set" }}</p>
             </div>
@@ -38,6 +38,49 @@
             <p class="text-xs uppercase tracking-wide text-slate-500 mb-1">Notes</p>
             <p>{{ pack.notes|default:"No notes yet." }}</p>
         </div>
+        <div class="mt-6 flex items-center gap-3 text-sm">
+            <a href="{% url 'product' %}" class="text-brand font-semibold underline">Back to browse</a>
+            {% if plan and plan.plan_url %}
+                <a href="{{ plan.plan_url }}" target="_blank" rel="noopener noreferrer" class="gradient-button text-sm font-semibold">Go to provider</a>
+            {% endif %}
+        </div>
     </div>
+    {% if plan %}
+    <div class="bg-white shadow-floating rounded-2xl p-8 border border-slate-100 space-y-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-slate-500">Plan snapshot</p>
+                <p class="text-lg font-semibold text-brand">{{ plan.plan_name }}</p>
+            </div>
+            {% if plan.plan_url %}
+            <a href="{{ plan.plan_url }}" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-brand underline">View on provider site</a>
+            {% endif %}
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4 text-sm text-slate-700">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <p class="text-xs uppercase tracking-wide text-slate-500 mb-1">Deductible</p>
+                <p class="text-lg font-semibold">{{ plan.overall_deductible|default:"Included" }}</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <p class="text-xs uppercase tracking-wide text-slate-500 mb-1">Referral needed</p>
+                <p class="text-lg font-semibold">{{ plan.referral_required|yesno:"Yes,No" }}</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <p class="text-xs uppercase tracking-wide text-slate-500 mb-1">Cities</p>
+                <p class="text-lg font-semibold">{{ plan.cities_display|default:plan.cities|join:", "|default:"N/A" }}</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <p class="text-xs uppercase tracking-wide text-slate-500 mb-1">Tags</p>
+                <p class="text-lg font-semibold">
+                    {% if plan.tags %}
+                        {{ plan.tags|join:", " }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </section>
 {% endblock %}

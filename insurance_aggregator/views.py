@@ -336,6 +336,13 @@ def product(request):
             summary_secondary='Child-ready and adult-ready options filtered instantly.',
         )
 
+    saved_pack_ids = set()
+    if request.user.is_authenticated:
+        saved_pack_ids = set(
+            Pack.objects.filter(user=request.user, plan_id__isnull=False).values_list('plan_id', flat=True)
+        )
+    saved_plan = request.GET.get('saved_plan')
+
     context = {
         'member_options': member_options,
         'cities': cities,
@@ -350,6 +357,8 @@ def product(request):
         'comparison_plans': comparison_plans,
         'comparison_rows': comparison_rows,
         'product_content': product_content,
+        'saved_pack_ids': saved_pack_ids,
+        'saved_plan': saved_plan,
     }
     return render(request, 'product.html', context)
 
@@ -453,10 +462,11 @@ def pack_detail(request, pack_id):
     pack = Pack.objects.filter(id=pack_id, user=request.user).first()
     if not pack:
         raise Http404('Pack not found')
+    plan = get_plan_by_id(pack.plan_id) if pack.plan_id else None
     return render(
         request,
         'account/deal_detail.html',
-        {'pack': pack},
+        {'pack': pack, 'plan': plan},
     )
 
 
@@ -474,7 +484,7 @@ def pack_save(request, plan_id):
     pack.city = cities[0] if cities else ''
     pack.notes = pack.notes or ''
     pack.save()
-    return redirect('product')
+    return redirect(f"{reverse('product')}?saved_plan={plan_id}")
 
 
 @staff_member_required
