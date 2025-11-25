@@ -47,7 +47,10 @@ DEFAULT_AGE = 24
 TRAFFIC_API_KEY = os.environ.get('TRAFFIC_API_KEY')
 TEAM_NICKNAMES = [
     nickname.strip()
-    for nickname in os.environ.get('TEAM_NICKNAMES', 'cheerful-newt, careful-deer, silly-elephant').split(',')
+    for nickname in os.environ.get(
+        'TEAM_NICKNAMES',
+        'cheerful-newt, careful-deer, silly-elephant, clever-crocodile, eastern-bang',
+    ).split(',')
     if nickname.strip()
 ]
 # Default to the IDs already used on the main site so analytics remain consistent.
