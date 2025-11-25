@@ -75,7 +75,7 @@
                     <a href="{% url 'product' %}" class="nav-link">Product</a>
                     <a href="{% url 'contact' %}" class="nav-link">Contact</a>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'deals_list' %}" class="nav-link">Deals</a>
+                        <a href="{% url 'packs_list' %}" class="nav-link">Packs</a>
                         <a href="{% url 'profile' %}" class="nav-link">Profile</a>
                         <a href="{% url 'logout' %}" class="nav-link">Logout</a>
                     {% else %}
@@ -92,7 +92,7 @@
                     <a href="{% url 'product' %}" class="nav-link">Product</a>
                     <a href="{% url 'contact' %}" class="nav-link">Contact</a>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'deals_list' %}" class="nav-link">Deals</a>
+                        <a href="{% url 'packs_list' %}" class="nav-link">Packs</a>
                         <a href="{% url 'profile' %}" class="nav-link">Profile</a>
                         <a href="{% url 'logout' %}" class="nav-link">Logout</a>
                     {% else %}

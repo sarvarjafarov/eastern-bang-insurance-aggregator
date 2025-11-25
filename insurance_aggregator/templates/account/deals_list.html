@@ -1,33 +1,33 @@
 {% extends "base.html" %}
-{% block title %}Deals · Insurance Buddy{% endblock %}
+{% block title %}Packs · Insurance Buddy{% endblock %}
 {% block content %}
 <section class="max-w-5xl mx-auto px-6 py-12">
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-semibold text-brand">Your deals</h1>
-            <p class="text-sm text-slate-600">Create and manage your insurance deals.</p>
+            <h1 class="text-2xl font-semibold text-brand">Your packs</h1>
+            <p class="text-sm text-slate-600">Save and manage the packs you’ve selected.</p>
         </div>
         <div class="flex items-center gap-3">
             <a href="{% url 'profile' %}" class="text-sm font-semibold text-brand underline">Profile</a>
-            <a href="{% url 'deal_create' %}" class="gradient-button text-sm font-semibold">New deal</a>
+            <a href="{% url 'pack_create' %}" class="gradient-button text-sm font-semibold">New pack</a>
         </div>
     </div>
-    {% if deals %}
+    {% if packs %}
         <div class="grid gap-4 md:grid-cols-2">
-            {% for deal in deals %}
-                <a href="{% url 'deal_detail' deal.id %}" class="block bg-white border border-slate-100 rounded-2xl shadow-floating p-5 hover:-translate-y-0.5 transition">
+            {% for pack in packs %}
+                <a href="{% url 'pack_detail' pack.id %}" class="block bg-white border border-slate-100 rounded-2xl shadow-floating p-5 hover:-translate-y-0.5 transition">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-brand">{{ deal.title }}</h3>
-                        <span class="text-xs px-2 py-1 rounded-full border border-slate-200 text-slate-700">{{ deal.get_status_display }}</span>
+                        <h3 class="text-lg font-semibold text-brand">{{ pack.plan_name }}</h3>
+                        <span class="text-xs px-2 py-1 rounded-full border border-slate-200 text-slate-700">{{ pack.get_status_display }}</span>
                     </div>
-                    <p class="text-sm text-slate-600 mt-2 line-clamp-2">{{ deal.description|default:"No description" }}</p>
-                    <div class="text-xs text-slate-500 mt-3">Updated {{ deal.updated_at|date:"M d, Y" }}</div>
+                    <p class="text-sm text-slate-600 mt-2 line-clamp-2">{{ pack.provider_name|default:"No provider set" }}</p>
+                    <div class="text-xs text-slate-500 mt-3">Updated {{ pack.updated_at|date:"M d, Y" }}</div>
                 </a>
             {% endfor %}
         </div>
     {% else %}
         <div class="bg-white border border-slate-100 rounded-2xl shadow-floating p-6 text-center text-slate-600">
-            No deals yet. <a href="{% url 'deal_create' %}" class="text-brand font-semibold underline">Create your first deal</a>.
+            No packs yet. <a href="{% url 'pack_create' %}" class="text-brand font-semibold underline">Save your first pack</a>.
         </div>
     {% endif %}
 </section>

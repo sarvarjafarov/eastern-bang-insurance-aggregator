@@ -17,7 +17,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from .forms import DealForm, OfferForm, ProfileForm, SignupForm
+from .forms import PackForm, ProfileForm, SignupForm
 from .analytics import (
     record_metric,
     record_metric_once,
@@ -38,8 +38,7 @@ from .models import (
     HomePageContent,
     PartnerOrganization,
     ProductPageContent,
-    Deal,
-    Offer,
+    Pack,
     UserProfile,
 )
 
@@ -374,7 +373,7 @@ def contact(request):
 
 def signup_view(request):
     if request.user.is_authenticated:
-        return redirect('deals_list')
+        return redirect('packs_list')
     form = SignupForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         user = User.objects.create_user(
@@ -385,13 +384,13 @@ def signup_view(request):
         _get_or_create_profile(user)
         record_metric('user_signup')
         login(request, user)
-        return redirect('deals_list')
+        return redirect('packs_list')
     return render(request, 'auth/signup.html', {'form': form})
 
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('deals_list')
+        return redirect('packs_list')
     error = None
     if request.method == 'POST':
         username = request.POST.get('username', '')
@@ -399,7 +398,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            return redirect(request.GET.get('next') or 'deals_list')
+            return redirect(request.GET.get('next') or 'packs_list')
         error = 'Invalid username or password.'
     return render(request, 'auth/login.html', {'error': error})
 
@@ -421,64 +420,44 @@ def profile_view(request):
 
 
 @login_required(login_url='login')
-def deals_list(request):
-    deals = Deal.objects.filter(user=request.user).order_by('-updated_at')
-    return render(request, 'account/deals_list.html', {'deals': deals})
+def packs_list(request):
+    packs = Pack.objects.filter(user=request.user).order_by('-updated_at')
+    return render(request, 'account/deals_list.html', {'packs': packs})
 
 
 @login_required(login_url='login')
-def deal_create(request):
-    form = DealForm(request.POST or None)
+def pack_create(request):
+    form = PackForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        deal = form.save(commit=False)
-        deal.user = request.user
-        deal.save()
-        return redirect('deal_detail', deal_id=deal.id)
+        pack = form.save(commit=False)
+        pack.user = request.user
+        pack.save()
+        return redirect('pack_detail', pack_id=pack.id)
     return render(request, 'account/deal_form.html', {'form': form, 'mode': 'create'})
 
 
 @login_required(login_url='login')
-def deal_edit(request, deal_id):
-    deal = Deal.objects.filter(id=deal_id, user=request.user).first()
-    if not deal:
-        raise Http404('Deal not found')
-    form = DealForm(request.POST or None, instance=deal)
+def pack_edit(request, pack_id):
+    pack = Pack.objects.filter(id=pack_id, user=request.user).first()
+    if not pack:
+        raise Http404('Pack not found')
+    form = PackForm(request.POST or None, instance=pack)
     if request.method == 'POST' and form.is_valid():
         form.save()
-        return redirect('deal_detail', deal_id=deal.id)
-    return render(request, 'account/deal_form.html', {'form': form, 'mode': 'edit', 'deal': deal})
+        return redirect('pack_detail', pack_id=pack.id)
+    return render(request, 'account/deal_form.html', {'form': form, 'mode': 'edit', 'pack': pack})
 
 
 @login_required(login_url='login')
-def deal_detail(request, deal_id):
-    deal = Deal.objects.filter(id=deal_id, user=request.user).first()
-    if not deal:
-        raise Http404('Deal not found')
-    offers = deal.offers.all()
-    offer_form = OfferForm(request.POST or None)
-    if request.method == 'POST' and offer_form.is_valid():
-        offer = offer_form.save(commit=False)
-        offer.user = request.user
-        offer.deal = deal
-        offer.save()
-        return redirect('deal_detail', deal_id=deal.id)
+def pack_detail(request, pack_id):
+    pack = Pack.objects.filter(id=pack_id, user=request.user).first()
+    if not pack:
+        raise Http404('Pack not found')
     return render(
         request,
         'account/deal_detail.html',
-        {'deal': deal, 'offers': offers, 'offer_form': offer_form},
+        {'pack': pack},
     )
-
-
-@login_required(login_url='login')
-def offer_edit(request, offer_id):
-    offer = Offer.objects.filter(id=offer_id, user=request.user).select_related('deal').first()
-    if not offer:
-        raise Http404('Offer not found')
-    form = OfferForm(request.POST or None, instance=offer)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        return redirect('deal_detail', deal_id=offer.deal.id)
-    return render(request, 'account/offer_form.html', {'form': form, 'offer': offer})
 
 
 @staff_member_required

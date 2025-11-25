@@ -166,46 +166,27 @@ class UserProfile(TimeStampedModel):
         return self.full_name or self.user.get_username()
 
 
-class Deal(TimeStampedModel):
+class Pack(TimeStampedModel):
     STATUS_CHOICES = [
-        ('draft', 'Draft'),
+        ('saved', 'Saved'),
         ('active', 'Active'),
-        ('pending', 'Pending'),
-        ('closed', 'Closed'),
+        ('expired', 'Expired'),
+        ('cancelled', 'Cancelled'),
     ]
 
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='deals')
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='packs')
+    plan_id = models.IntegerField(null=True, blank=True)
+    plan_name = models.CharField(max_length=200)
+    provider_name = models.CharField(max_length=200, blank=True)
+    city = models.CharField(max_length=120, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='saved')
     premium_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
 
     class Meta:
         ordering = ['-updated_at', '-created_at']
 
     def __str__(self):
-        return f"{self.title} ({self.status})"
-
-
-class Offer(TimeStampedModel):
-    STATUS_CHOICES = [
-        ('open', 'Open'),
-        ('accepted', 'Accepted'),
-        ('rejected', 'Rejected'),
-        ('expired', 'Expired'),
-    ]
-
-    deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name='offers')
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='offers')
-    provider_name = models.CharField(max_length=200)
-    summary = models.TextField(blank=True)
-    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
-
-    class Meta:
-        ordering = ['-updated_at', '-created_at']
-
-    def __str__(self):
-        return f"{self.provider_name} · {self.status}"
+        return f"{self.plan_name} ({self.get_status_display()})"

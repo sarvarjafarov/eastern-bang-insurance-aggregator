@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}{{ mode|title }} deal · Insurance Buddy{% endblock %}
+{% block title %}{{ mode|title }} pack · Insurance Buddy{% endblock %}
 {% block content %}
 <section class="max-w-3xl mx-auto px-6 py-12">
     <div class="bg-white shadow-floating rounded-2xl p-8 border border-slate-100">
         <div class="flex items-center justify-between mb-4">
             <div>
-                <h1 class="text-2xl font-semibold text-brand">{{ mode|title }} deal</h1>
-                <p class="text-sm text-slate-600">Define the key details for this deal.</p>
+                <h1 class="text-2xl font-semibold text-brand">{{ mode|title }} pack</h1>
+                <p class="text-sm text-slate-600">Define the key details for this pack.</p>
             </div>
-            <a href="{% url 'deals_list' %}" class="text-sm font-semibold text-brand underline">Back to deals</a>
+            <a href="{% url 'packs_list' %}" class="text-sm font-semibold text-brand underline">Back to packs</a>
         </div>
         <form method="post" class="space-y-4">
             {% csrf_token %}
@@ -22,7 +22,7 @@
                     {% endif %}
                 </div>
             {% endfor %}
-            <button type="submit" class="gradient-button text-sm font-semibold">{{ mode|title }} deal</button>
+            <button type="submit" class="gradient-button text-sm font-semibold">{{ mode|title }} pack</button>
         </form>
     </div>
 </section>

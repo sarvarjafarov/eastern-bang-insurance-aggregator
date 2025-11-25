@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 
-from .models import Deal, Offer, UserProfile
+from .models import Pack, UserProfile
 
 
 class StyledFormMixin:
@@ -53,27 +53,24 @@ class ProfileForm(StyledFormMixin, forms.ModelForm):
         self._add_styles()
 
 
-class DealForm(StyledFormMixin, forms.ModelForm):
+class PackForm(StyledFormMixin, forms.ModelForm):
     class Meta:
-        model = Deal
-        fields = ['title', 'description', 'status', 'premium_amount', 'start_date', 'end_date']
+        model = Pack
+        fields = [
+            'plan_name',
+            'provider_name',
+            'plan_id',
+            'city',
+            'status',
+            'premium_amount',
+            'start_date',
+            'end_date',
+            'notes',
+        ]
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 3}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._add_styles()
-
-
-class OfferForm(StyledFormMixin, forms.ModelForm):
-    class Meta:
-        model = Offer
-        fields = ['provider_name', 'summary', 'amount', 'status']
-        widgets = {
-            'summary': forms.Textarea(attrs={'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
