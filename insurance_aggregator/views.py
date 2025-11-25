@@ -460,6 +460,23 @@ def pack_detail(request, pack_id):
     )
 
 
+@login_required(login_url='login')
+def pack_save(request, plan_id):
+    if request.method != 'POST':
+        return redirect('product')
+    plan = get_plan_by_id(plan_id)
+    if not plan:
+        raise Http404('Plan not found')
+    pack, _ = Pack.objects.get_or_create(user=request.user, plan_id=plan_id)
+    pack.plan_name = plan.get('plan_name') or f'Plan {plan_id}'
+    pack.provider_name = plan.get('provider') or ''
+    cities = plan.get('cities') or []
+    pack.city = cities[0] if cities else ''
+    pack.notes = pack.notes or ''
+    pack.save()
+    return redirect('product')
+
+
 @staff_member_required
 def dashboard(request):
     catalog = load_plan_catalog()
