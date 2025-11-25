@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ mode|title }} deal · Insurance Buddy{% endblock %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-6 py-12">
+    <div class="bg-white shadow-floating rounded-2xl p-8 border border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-2xl font-semibold text-brand">{{ mode|title }} deal</h1>
+                <p class="text-sm text-slate-600">Define the key details for this deal.</p>
+            </div>
+            <a href="{% url 'deals_list' %}" class="text-sm font-semibold text-brand underline">Back to deals</a>
+        </div>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {% for field in form %}
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<p class="text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}
+                    {% if field.errors %}
+                        <p class="text-xs text-rose-600 mt-1">{{ field.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="gradient-button text-sm font-semibold">{{ mode|title }} deal</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

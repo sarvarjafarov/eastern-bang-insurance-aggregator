@@ -6,6 +6,9 @@ from typing import Optional
 from types import SimpleNamespace
 
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.db import OperationalError, ProgrammingError
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -14,6 +17,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from .forms import DealForm, OfferForm, ProfileForm, SignupForm
 from .analytics import (
     record_metric,
     record_metric_once,
@@ -34,6 +38,9 @@ from .models import (
     HomePageContent,
     PartnerOrganization,
     ProductPageContent,
+    Deal,
+    Offer,
+    UserProfile,
 )
 
 MEMBER_OPTIONS = [
@@ -62,6 +69,11 @@ def _strip_reference(value):
     if isinstance(value, str) and ':contentReference' in value:
         return value.split(':contentReference', 1)[0]
     return value
+
+
+def _get_or_create_profile(user: User) -> UserProfile:
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    return profile
 
 
 def _default_home_content():
@@ -358,6 +370,115 @@ def contact(request):
             support_email='support@insurancebuddy.com',
         )
     return render(request, 'contact.html', {'submitted': submitted, 'contact_content': contact_content})
+
+
+def signup_view(request):
+    if request.user.is_authenticated:
+        return redirect('deals_list')
+    form = SignupForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        user = User.objects.create_user(
+            username=form.cleaned_data['username'],
+            email=form.cleaned_data['email'],
+            password=form.cleaned_data['password'],
+        )
+        _get_or_create_profile(user)
+        record_metric('user_signup')
+        login(request, user)
+        return redirect('deals_list')
+    return render(request, 'auth/signup.html', {'form': form})
+
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('deals_list')
+    error = None
+    if request.method == 'POST':
+        username = request.POST.get('username', '')
+        password = request.POST.get('password', '')
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect(request.GET.get('next') or 'deals_list')
+        error = 'Invalid username or password.'
+    return render(request, 'auth/login.html', {'error': error})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('home')
+
+
+@login_required(login_url='login')
+def profile_view(request):
+    profile = _get_or_create_profile(request.user)
+    form = ProfileForm(request.POST or None, instance=profile)
+    saved = False
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        saved = True
+    return render(request, 'account/profile.html', {'form': form, 'saved': saved})
+
+
+@login_required(login_url='login')
+def deals_list(request):
+    deals = Deal.objects.filter(user=request.user).order_by('-updated_at')
+    return render(request, 'account/deals_list.html', {'deals': deals})
+
+
+@login_required(login_url='login')
+def deal_create(request):
+    form = DealForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        deal = form.save(commit=False)
+        deal.user = request.user
+        deal.save()
+        return redirect('deal_detail', deal_id=deal.id)
+    return render(request, 'account/deal_form.html', {'form': form, 'mode': 'create'})
+
+
+@login_required(login_url='login')
+def deal_edit(request, deal_id):
+    deal = Deal.objects.filter(id=deal_id, user=request.user).first()
+    if not deal:
+        raise Http404('Deal not found')
+    form = DealForm(request.POST or None, instance=deal)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('deal_detail', deal_id=deal.id)
+    return render(request, 'account/deal_form.html', {'form': form, 'mode': 'edit', 'deal': deal})
+
+
+@login_required(login_url='login')
+def deal_detail(request, deal_id):
+    deal = Deal.objects.filter(id=deal_id, user=request.user).first()
+    if not deal:
+        raise Http404('Deal not found')
+    offers = deal.offers.all()
+    offer_form = OfferForm(request.POST or None)
+    if request.method == 'POST' and offer_form.is_valid():
+        offer = offer_form.save(commit=False)
+        offer.user = request.user
+        offer.deal = deal
+        offer.save()
+        return redirect('deal_detail', deal_id=deal.id)
+    return render(
+        request,
+        'account/deal_detail.html',
+        {'deal': deal, 'offers': offers, 'offer_form': offer_form},
+    )
+
+
+@login_required(login_url='login')
+def offer_edit(request, offer_id):
+    offer = Offer.objects.filter(id=offer_id, user=request.user).select_related('deal').first()
+    if not offer:
+        raise Http404('Offer not found')
+    form = OfferForm(request.POST or None, instance=offer)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('deal_detail', deal_id=offer.deal.id)
+    return render(request, 'account/offer_form.html', {'form': form, 'offer': offer})
 
 
 @staff_member_required

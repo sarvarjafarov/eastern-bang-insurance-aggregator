@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Sign up · Insurance Buddy{% endblock %}
+{% block content %}
+<section class="max-w-xl mx-auto px-6 py-12">
+    <div class="bg-white shadow-floating rounded-2xl p-8 border border-slate-100">
+        <h1 class="text-2xl font-semibold text-brand mb-2">Create account</h1>
+        <p class="text-sm text-slate-600 mb-6">Set a username and password to manage your deals and offers.</p>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-sm">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            {% for field in form %}
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <p class="text-xs text-rose-600 mt-1">{{ field.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="w-full gradient-button text-sm font-semibold">Sign up</button>
+        </form>
+        <p class="text-sm text-slate-600 mt-4">Already have an account? <a href="{% url 'login' %}" class="text-brand font-semibold underline">Login</a></p>
+    </div>
+</section>
+{% endblock %}

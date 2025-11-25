@@ -154,3 +154,58 @@ class DailyMetric(TimeStampedModel):
 
     def __str__(self):
         return f"{self.metric} · {self.date} · {self.count}"
+
+
+class UserProfile(TimeStampedModel):
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='profile')
+    full_name = models.CharField(max_length=120, blank=True)
+    phone = models.CharField(max_length=40, blank=True)
+    organization = models.CharField(max_length=120, blank=True)
+
+    def __str__(self):
+        return self.full_name or self.user.get_username()
+
+
+class Deal(TimeStampedModel):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('pending', 'Pending'),
+        ('closed', 'Closed'),
+    ]
+
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='deals')
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    premium_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-updated_at', '-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({self.status})"
+
+
+class Offer(TimeStampedModel):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('expired', 'Expired'),
+    ]
+
+    deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name='offers')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='offers')
+    provider_name = models.CharField(max_length=200)
+    summary = models.TextField(blank=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+
+    class Meta:
+        ordering = ['-updated_at', '-created_at']
+
+    def __str__(self):
+        return f"{self.provider_name} · {self.status}"

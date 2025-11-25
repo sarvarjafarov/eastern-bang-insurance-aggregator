@@ -71,3 +71,9 @@ curl -X POST http://localhost:8000/api/traffic/ \
 ## Standardized analytics endpoint
 
 A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-bang")`). It lists your configured team nicknames and renders a button with id `abtest` whose label alternates between “kudos” and “thanks”; page views and variant assignments are recorded via the internal metrics system, and you can also attach Google Analytics or Yandex Metrica by setting `GA_MEASUREMENT_ID` or `YANDEX_METRICA_ID`.
+
+## Accounts, profiles, deals, offers
+
+- Signup/login/logout: `/account/signup/`, `/account/login/`, `/account/logout/`
+- Profile: `/account/profile/`
+- Deals: `/account/deals/` with create/edit/detail pages; offers are managed inside a deal detail page. Access is restricted to the signed-in user’s own records.
