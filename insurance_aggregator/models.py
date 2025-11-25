@@ -184,6 +184,7 @@ class Pack(TimeStampedModel):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True)
+    selected_addons = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ['-updated_at', '-created_at']

@@ -38,6 +38,7 @@ urlpatterns = [
     path('account/packs/<int:pack_id>/', views.pack_detail, name='pack_detail'),
     path('account/packs/<int:pack_id>/edit/', views.pack_edit, name='pack_edit'),
     path('account/packs/save/<int:plan_id>/', views.pack_save, name='pack_save'),
+    path('account/addons/<int:plan_id>/', views.addons_select, name='addons_select'),
     path('account/deals/', views.packs_list, name='deals_list'),
     path('account/deals/new/', views.pack_create, name='deal_create'),
     path('account/deals/<int:pack_id>/', views.pack_detail, name='deal_detail'),

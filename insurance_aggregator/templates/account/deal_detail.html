@@ -38,6 +38,16 @@
             <p class="text-xs uppercase tracking-wide text-slate-500 mb-1">Notes</p>
             <p>{{ pack.notes|default:"No notes yet." }}</p>
         </div>
+        {% if pack.selected_addons %}
+        <div class="mt-4 text-sm text-slate-700">
+            <p class="text-xs uppercase tracking-wide text-slate-500 mb-1">Selected add-ons</p>
+            <div class="flex flex-wrap gap-2">
+                {% for addon in pack.selected_addons %}
+                    <span class="px-3 py-1 rounded-full bg-brand/5 border border-brand/10 text-brand text-xs font-semibold">{{ addon }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
         <div class="mt-6 flex items-center gap-3 text-sm">
             <a href="{% url 'product' %}" class="text-brand font-semibold underline">Back to browse</a>
             {% if plan and plan.plan_url %}

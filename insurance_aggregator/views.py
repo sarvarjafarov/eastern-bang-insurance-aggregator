@@ -63,6 +63,12 @@ TEAM_NICKNAMES = [
 # Default to the IDs already used on the main site so analytics remain consistent.
 GA_MEASUREMENT_ID = os.environ.get('GA_MEASUREMENT_ID', 'G-2EYT060RY4')
 YANDEX_METRICA_ID = os.environ.get('YANDEX_METRICA_ID', '105393946')
+ADDONS_CATALOG = [
+    {'code': 'dental', 'label': 'Dental & vision', 'description': 'Preventive care, cleanings, frames, lenses.', 'badge': 'Popular', 'price': '$12/mo'},
+    {'code': 'accident', 'label': 'Accident rider', 'description': 'Covers ER visits and sports injuries.', 'badge': 'Active', 'price': '$9/mo'},
+    {'code': 'mental', 'label': 'Mental health', 'description': 'Therapy sessions and telehealth included.', 'badge': 'Support', 'price': '$7/mo'},
+    {'code': 'travel', 'label': 'Travel coverage', 'description': 'Trip delays, lost bags, evacuation.', 'badge': 'Travel', 'price': '$6/mo'},
+]
 
 
 def _strip_reference(value):
@@ -325,7 +331,7 @@ def product(request):
         record_metric_once(request, 'comparison_engaged')
 
     try:
-        product_content = ProductPageContent.objects.first()
+    product_content = ProductPageContent.objects.first()
     except (OperationalError, ProgrammingError):
         product_content = None
     if not product_content:
@@ -338,6 +344,7 @@ def product(request):
         )
 
     saved_pack_ids = set()
+    session_addons = request.session.get('selected_addons', {})
     if request.user.is_authenticated:
         saved_pack_ids = set(
             Pack.objects.filter(user=request.user, plan_id__isnull=False).values_list('plan_id', flat=True)
@@ -360,6 +367,8 @@ def product(request):
         'product_content': product_content,
         'saved_pack_ids': saved_pack_ids,
         'saved_plan': saved_plan,
+        'addons_catalog': ADDONS_CATALOG,
+        'session_addons': session_addons,
     }
     return render(request, 'product.html', context)
 
@@ -484,8 +493,21 @@ def pack_save(request, plan_id):
     cities = plan.get('cities') or []
     pack.city = cities[0] if cities else ''
     pack.notes = pack.notes or ''
+    selected_addons = request.POST.getlist('addons') or request.session.get('selected_addons', {}).get(str(plan_id), [])
+    pack.selected_addons = selected_addons
     pack.save()
     return redirect(f"{reverse('product')}?saved_plan={plan_id}")
+
+
+def addons_select(request, plan_id):
+    if request.method != 'POST':
+        return redirect('product')
+    selected = request.POST.getlist('addons')
+    session_addons = request.session.get('selected_addons', {})
+    session_addons[str(plan_id)] = selected
+    request.session['selected_addons'] = session_addons
+    request.session.modified = True
+    return redirect(f"{reverse('product')}?plan={plan_id}")
 
 
 @staff_member_required
