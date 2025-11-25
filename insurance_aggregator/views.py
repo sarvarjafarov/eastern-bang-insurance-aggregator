@@ -331,7 +331,7 @@ def product(request):
         record_metric_once(request, 'comparison_engaged')
 
     try:
-    product_content = ProductPageContent.objects.first()
+        product_content = ProductPageContent.objects.first()
     except (OperationalError, ProgrammingError):
         product_content = None
     if not product_content:
