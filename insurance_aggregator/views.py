@@ -499,6 +499,7 @@ def pack_save(request, plan_id):
     return redirect(f"{reverse('product')}?saved_plan={plan_id}")
 
 
+@login_required(login_url='login')
 def addons_select(request, plan_id):
     if request.method != 'POST':
         return redirect('product')

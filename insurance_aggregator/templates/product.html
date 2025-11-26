@@ -151,6 +151,7 @@
                             Add-ons
                             <span class="text-xs text-brand/60">Personalize coverage</span>
                         </summary>
+                        {% if user.is_authenticated %}
                         <form method="post" action="{% url 'addons_select' plan.plan_id %}" class="mt-3 space-y-2">
                             {% csrf_token %}
                             {% for addon in addons_catalog %}
@@ -171,6 +172,11 @@
                             {% endfor %}
                             <button type="submit" class="w-full text-sm font-semibold text-brand underline">Save add-ons</button>
                         </form>
+                        {% else %}
+                        <div class="mt-3 text-sm text-brand/70">
+                            <a href="{% url 'login' %}?next={% url 'product' %}" class="font-semibold underline">Login</a> to select add-ons and see your personalized plan.
+                        </div>
+                        {% endif %}
                     </details>
                     {% if plan.plan_url %}
                     <a class="gradient-button w-full" href="{% url 'plan_redirect' plan.plan_id %}" target="_blank" rel="noopener noreferrer">Select Plan</a>
