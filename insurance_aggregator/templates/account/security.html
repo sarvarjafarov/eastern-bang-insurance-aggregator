@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Security · Insurance Buddy{% endblock %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-6 py-12 space-y-6">
+    <div class="bg-white shadow-floating rounded-2xl p-8 border border-slate-100">
+        <h1 class="text-2xl font-semibold text-brand mb-2">Security</h1>
+        <p class="text-sm text-slate-600 mb-4">Manage your account security actions.</p>
+        <form method="post" class="space-y-3">
+            {% csrf_token %}
+            <div class="p-4 rounded-xl border border-slate-100 bg-slate-50">
+                <p class="text-sm font-semibold text-brand">Log out</p>
+                <p class="text-xs text-slate-600">Log out of this session. You’ll need to sign back in.</p>
+                <button name="action" value="logout" class="mt-2 text-sm font-semibold text-brand underline">Log out</button>
+            </div>
+            <div class="p-4 rounded-xl border border-rose-200 bg-rose-50">
+                <p class="text-sm font-semibold text-rose-700">Delete account</p>
+                <p class="text-xs text-rose-600">This permanently deletes your account and associated data.</p>
+                <button name="action" value="delete" class="mt-2 text-sm font-semibold text-rose-700 underline">Delete account</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from .forms import PackForm, ProfileForm, SignupForm
+from .forms import DocumentForm, PackForm, ProfileForm, ReviewForm, SignupForm, SupportTicketForm
 from .analytics import (
     record_metric,
     record_metric_once,
@@ -40,6 +40,12 @@ from .models import (
     PartnerOrganization,
     ProductPageContent,
     Pack,
+    Activity,
+    Document,
+    Notification,
+    BillingRecord,
+    SupportTicket,
+    Review,
     UserProfile,
 )
 
@@ -80,6 +86,102 @@ def _strip_reference(value):
 def _get_or_create_profile(user: User) -> UserProfile:
     profile, _ = UserProfile.objects.get_or_create(user=user)
     return profile
+
+
+def log_activity(user: User, action: str, *, plan_id: int = None, plan_name: str = '', meta: dict = None) -> None:
+    if not user or not user.is_authenticated:
+        return
+    Activity.objects.create(
+        user=user,
+        action=action,
+        plan_id=plan_id,
+        plan_name=plan_name or '',
+        meta=meta or {},
+    )
+
+
+def _review_stats_for_plans(plan_ids: set) -> dict:
+    stats: dict[int, dict] = {}
+    if not plan_ids:
+        return stats
+    qs = Review.objects.filter(plan_id__in=plan_ids)
+    for review in qs:
+        plan_bucket = stats.setdefault(
+            review.plan_id,
+            {'avg': 0.0, 'count': 0, 'items': []},
+        )
+        plan_bucket['items'].append(review)
+        plan_bucket['count'] += 1
+    for plan_id, bucket in stats.items():
+        if bucket['count']:
+            bucket['avg'] = round(
+                sum(r.rating for r in bucket['items']) / bucket['count'], 1
+            )
+    return stats
+
+
+def _recommend_plans(catalog: list, profile: UserProfile, *, limit: int = 3) -> list:
+    if not catalog:
+        return []
+    preferred_city = getattr(profile, 'preferred_city', '') or ''
+    preferred_member = getattr(profile, 'preferred_member', '') or ''
+    preferred_providers = [p.strip().lower() for p in (profile.preferred_providers or '').split(',') if p.strip()]
+    deductible_pref = (profile.deductible_preference or '').lower()
+
+    def score(plan: dict) -> int:
+        s = 0
+        if preferred_city and preferred_city in plan.get('cities', []):
+            s += 3
+        if preferred_member:
+            if preferred_member == 'adult' and plan.get('for_adult'):
+                s += 2
+            if preferred_member == 'child' and plan.get('for_child'):
+                s += 2
+            if preferred_member == 'family' and (plan.get('for_child') and plan.get('for_adult')):
+                s += 2
+        provider = (plan.get('provider') or '').lower()
+        if preferred_providers and any(p in provider for p in preferred_providers):
+            s += 2
+        deductible = (plan.get('overall_deductible') or '').lower()
+        if deductible_pref == 'low' and ('0' in deductible or 'included' in deductible):
+            s += 2
+        if deductible_pref == 'medium' and ('500' in deductible or '1000' in deductible):
+            s += 1
+        if deductible_pref == 'high' and ('2000' in deductible or '5000' in deductible):
+            s += 1
+        s += 1 if plan.get('rating') else 0
+        return s
+
+    ranked = sorted(catalog, key=lambda p: (score(p), p.get('rating', 0)), reverse=True)
+    return ranked[:limit]
+
+
+def _enrich_documents(user):
+    return Document.objects.filter(user=user).order_by('-updated_at')
+
+
+def _onboarding_progress(user: User) -> dict:
+    profile = _get_or_create_profile(user)
+    steps = []
+    has_preferences = bool(profile.preferred_member or profile.preferred_city or profile.budget_max or profile.budget_min)
+    has_saved_plans = Pack.objects.filter(user=user).exists()
+    has_addons = Pack.objects.filter(user=user).exclude(selected_addons=[]).exists()
+    has_review = Review.objects.filter(user=user).exists()
+    has_document = Document.objects.filter(user=user).exists()
+    has_ticket = SupportTicket.objects.filter(user=user).exists()
+    has_billing = BillingRecord.objects.filter(user=user).exists()
+
+    steps.append({'label': 'Set preferences', 'done': has_preferences})
+    steps.append({'label': 'Save a plan', 'done': has_saved_plans})
+    steps.append({'label': 'Choose add-ons', 'done': has_addons})
+    steps.append({'label': 'Leave a review', 'done': has_review})
+    steps.append({'label': 'Upload a document', 'done': has_document})
+    steps.append({'label': 'Open a support ticket', 'done': has_ticket})
+    steps.append({'label': 'Add a billing record', 'done': has_billing})
+
+    completed = sum(1 for s in steps if s['done'])
+    percent = int(round((completed / len(steps)) * 100)) if steps else 0
+    return {'steps': steps, 'completed': completed, 'total': len(steps), 'percent': percent}
 
 
 def _default_home_content():
@@ -298,12 +400,12 @@ def product(request):
     record_metric_once(request, 'plan_profile_view')
 
     selected_member = _sanitize_member_choice(
-        request.GET.get('member', default_member),
+        request.GET.get('member') or (profile.preferred_member if request.user.is_authenticated else default_member) or default_member,
         {option['value'] for option in member_options},
         default_member,
     )
     selected_age = _parse_age(request.GET.get('age'))
-    selected_city = request.GET.get('city') or cities[0]
+    selected_city = request.GET.get('city') or (profile.preferred_city if request.user.is_authenticated and getattr(profile, 'preferred_city', None) else cities[0])
     if selected_city not in cities:
         selected_city = cities[0]
 
@@ -350,6 +452,15 @@ def product(request):
             Pack.objects.filter(user=request.user, plan_id__isnull=False).values_list('plan_id', flat=True)
         )
     saved_plan = request.GET.get('saved_plan')
+    plan_ids = {plan['plan_id'] for plan in featured_plans if plan.get('plan_id')}
+    plan_ids.update({plan['plan_id'] for plan in comparison_plans if plan.get('plan_id')})
+    review_stats = _review_stats_for_plans(plan_ids)
+    review_forms = {pid: ReviewForm() for pid in plan_ids}
+
+    recommended_plans = []
+    if request.user.is_authenticated:
+        profile = _get_or_create_profile(request.user)
+        recommended_plans = _recommend_plans(filtered, profile, limit=3)
 
     context = {
         'member_options': member_options,
@@ -369,6 +480,9 @@ def product(request):
         'saved_plan': saved_plan,
         'addons_catalog': ADDONS_CATALOG,
         'session_addons': session_addons,
+        'review_stats': review_stats,
+        'review_forms': review_forms,
+        'recommended_plans': recommended_plans,
     }
     return render(request, 'product.html', context)
 
@@ -435,13 +549,34 @@ def profile_view(request):
     if request.method == 'POST' and form.is_valid():
         form.save()
         saved = True
-    return render(request, 'account/profile.html', {'form': form, 'saved': saved})
+    activities = Activity.objects.filter(user=request.user).order_by('-created_at')[:10]
+    documents = _enrich_documents(request.user)[:5]
+    onboarding = _onboarding_progress(request.user)
+    return render(
+        request,
+        'account/profile.html',
+        {
+            'form': form,
+            'saved': saved,
+            'activities': activities,
+            'documents': documents,
+            'onboarding': onboarding,
+        },
+    )
 
 
 @login_required(login_url='login')
 def packs_list(request):
     packs = Pack.objects.filter(user=request.user).order_by('-updated_at')
-    return render(request, 'account/deals_list.html', {'packs': packs})
+    plan_snapshots: dict[int, dict] = {}
+    for pack in packs:
+        if pack.plan_id and pack.plan_id not in plan_snapshots:
+            plan_snapshots[pack.plan_id] = get_plan_by_id(pack.plan_id)
+    return render(
+        request,
+        'account/deals_list.html',
+        {'packs': packs, 'plan_snapshots': plan_snapshots},
+    )
 
 
 @login_required(login_url='login')
@@ -473,10 +608,12 @@ def pack_detail(request, pack_id):
     if not pack:
         raise Http404('Pack not found')
     plan = get_plan_by_id(pack.plan_id) if pack.plan_id else None
+    reviews = Review.objects.filter(plan_id=pack.plan_id).order_by('-created_at') if pack.plan_id else []
+    review_form = ReviewForm()
     return render(
         request,
         'account/deal_detail.html',
-        {'pack': pack, 'plan': plan},
+        {'pack': pack, 'plan': plan, 'reviews': reviews, 'review_form': review_form},
     )
 
 
@@ -496,6 +633,7 @@ def pack_save(request, plan_id):
     selected_addons = request.POST.getlist('addons') or request.session.get('selected_addons', {}).get(str(plan_id), [])
     pack.selected_addons = selected_addons
     pack.save()
+    log_activity(request.user, 'saved_plan', plan_id=plan_id, plan_name=pack.plan_name, meta={'addons': selected_addons})
     return redirect(f"{reverse('product')}?saved_plan={plan_id}")
 
 
@@ -508,7 +646,96 @@ def addons_select(request, plan_id):
     session_addons[str(plan_id)] = selected
     request.session['selected_addons'] = session_addons
     request.session.modified = True
+    plan = get_plan_by_id(plan_id)
+    log_activity(request.user, 'updated_addons', plan_id=plan_id, plan_name=plan.get('plan_name') if plan else '', meta={'addons': selected})
     return redirect(f"{reverse('product')}?plan={plan_id}")
+
+
+@login_required(login_url='login')
+def submit_review(request, plan_id):
+    if request.method != 'POST':
+        return redirect('product')
+    plan = get_plan_by_id(plan_id)
+    if not plan:
+        raise Http404('Plan not found')
+    form = ReviewForm(request.POST)
+    if form.is_valid():
+        review = form.save(commit=False)
+        review.user = request.user
+        review.plan_id = plan_id
+        review.plan_name = plan.get('plan_name') or f'Plan {plan_id}'
+        review.save()
+        log_activity(
+            request.user,
+            'review_submitted',
+            plan_id=plan_id,
+            plan_name=review.plan_name,
+            meta={'rating': review.rating},
+        )
+    return redirect(f"{reverse('product')}?plan={plan_id}#plan-{plan_id}")
+
+
+@login_required(login_url='login')
+def documents_list(request):
+    documents = _enrich_documents(request.user)
+    form = DocumentForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        doc = form.save(commit=False)
+        doc.user = request.user
+        doc.save()
+        log_activity(request.user, 'document_added', plan_name=doc.title, meta={'doc': doc.doc_type})
+        return redirect('documents_list')
+    return render(request, 'account/documents_list.html', {'documents': documents, 'form': form})
+
+
+@login_required(login_url='login')
+def notifications_list(request):
+    notifications = Notification.objects.filter(user=request.user).order_by('is_read', '-created_at')
+    if request.method == 'POST':
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return redirect('notifications_list')
+    return render(request, 'account/notifications.html', {'notifications': notifications})
+
+
+@login_required(login_url='login')
+def support_list(request):
+    tickets = SupportTicket.objects.filter(user=request.user).order_by('-updated_at')
+    form = SupportTicketForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        ticket = form.save(commit=False)
+        ticket.user = request.user
+        ticket.save()
+        log_activity(request.user, 'support_opened', plan_name=ticket.subject, meta={'priority': ticket.priority})
+        return redirect('support_list')
+    return render(request, 'account/support.html', {'tickets': tickets, 'form': form})
+
+
+@login_required(login_url='login')
+def security_view(request):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'logout':
+            logout(request)
+            return redirect('home')
+        if action == 'delete':
+            user = request.user
+            logout(request)
+            user.delete()
+            return redirect('home')
+    return render(request, 'account/security.html')
+
+
+@login_required(login_url='login')
+def billing_list(request):
+    records = BillingRecord.objects.filter(user=request.user).order_by('-updated_at')
+    form = BillingRecordForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        record = form.save(commit=False)
+        record.user = request.user
+        record.save()
+        log_activity(request.user, 'billing_updated', plan_name=record.title, meta={'status': record.status})
+        return redirect('billing_list')
+    return render(request, 'account/billing.html', {'records': records, 'form': form})
 
 
 @staff_member_required

@@ -2,27 +2,60 @@
 {% block title %}Packs · Insurance Buddy{% endblock %}
 {% block content %}
 <section class="max-w-5xl mx-auto px-6 py-12">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold text-brand">Your saved plans</h1>
-            <p class="text-sm text-slate-600">Review plans you’ve saved while browsing.</p>
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-brand">Your saved plans</h1>
+                <p class="text-sm text-slate-600">Review plans you’ve saved while browsing.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'profile' %}" class="text-sm font-semibold text-brand underline">Profile</a>
+                <a href="{% url 'pack_create' %}" class="gradient-button text-sm font-semibold">Add saved plan</a>
+            </div>
         </div>
-        <div class="flex items-center gap-3">
-            <a href="{% url 'profile' %}" class="text-sm font-semibold text-brand underline">Profile</a>
-            <a href="{% url 'pack_create' %}" class="gradient-button text-sm font-semibold">Add saved plan</a>
+        <div class="grid md:grid-cols-3 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-floating">
+                <p class="text-xs uppercase tracking-wide text-slate-500">Preferences</p>
+                <p class="text-sm text-brand/70">Member: {{ request.user.profile.preferred_member|default:"-" }}, City: {{ request.user.profile.preferred_city|default:"-" }}</p>
+            </div>
+            <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-floating">
+                <p class="text-xs uppercase tracking-wide text-slate-500">Alerts</p>
+                <p class="text-sm text-brand/70"><a href="{% url 'notifications_list' %}" class="font-semibold underline">Notifications</a></p>
+            </div>
+            <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-floating">
+                <p class="text-xs uppercase tracking-wide text-slate-500">Support</p>
+                <p class="text-sm text-brand/70"><a href="{% url 'support_list' %}" class="font-semibold underline">Open ticket</a></p>
+            </div>
         </div>
-    </div>
-    {% if packs %}
+        {% if packs %}
         <div class="grid gap-4 md:grid-cols-2">
             {% for pack in packs %}
-                <a href="{% url 'pack_detail' pack.id %}" class="block bg-white border border-slate-100 rounded-2xl shadow-floating p-5 hover:-translate-y-0.5 transition">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-brand">{{ pack.plan_name }}</h3>
+            {% with snapshot=plan_snapshots|get_item:pack.plan_id %}
+            <a href="{% url 'pack_detail' pack.id %}" class="block bg-white border border-slate-100 rounded-2xl shadow-floating p-5 hover:-translate-y-0.5 transition">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-lg font-semibold text-brand">{{ pack.plan_name }}</h3>
+                            <p class="text-xs text-slate-500">{{ pack.provider_name|default:"" }}{% if pack.city %} · {{ pack.city }}{% endif %}</p>
+                        </div>
                         <span class="text-xs px-2 py-1 rounded-full border border-slate-200 text-slate-700">{{ pack.get_status_display }}</span>
                     </div>
                     <p class="text-sm text-slate-600 mt-2 line-clamp-2">{{ pack.provider_name|default:"No provider set" }}</p>
+                    {% if pack.selected_addons %}
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        {% for addon in pack.selected_addons %}
+                        <span class="px-3 py-1 rounded-full bg-brand/5 border border-brand/10 text-brand text-xs font-semibold">{{ addon }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if snapshot %}
+                    <div class="flex flex-wrap gap-2 mt-2 text-xs text-slate-500">
+                        {% for tag in snapshot.tags|slice:":3" %}
+                        <span class="px-2 py-1 rounded-full bg-slate-50 border border-slate-100">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     <div class="text-xs text-slate-500 mt-3">Updated {{ pack.updated_at|date:"M d, Y" }}</div>
                 </a>
+                {% endwith %}
             {% endfor %}
         </div>
     {% else %}

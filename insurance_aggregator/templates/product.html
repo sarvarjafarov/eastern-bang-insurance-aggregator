@@ -94,7 +94,7 @@
         </div>
         <div class="grid gap-6 md:grid-cols-2">
             {% for plan in featured_plans %}
-            <div class="plan-card">
+            <div class="plan-card" id="plan-{{ plan.plan_id }}">
                 <div class="flex items-center justify-between text-xs text-brand/70 mb-2">
                     <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-brand/5 border border-brand/10">
                         Customizable
@@ -108,6 +108,15 @@
                         <p class="text-xs uppercase tracking-wide text-brand/60">{{ plan.provider }}</p>
                         <h3 class="text-xl font-semibold leading-tight">{{ plan.plan_name }}</h3>
                         <p class="text-sm text-brand/60">{{ plan.audience_label }}</p>
+                        {% with stats=review_stats|get_item:plan.plan_id %}
+                        {% if stats %}
+                        <div class="flex items-center gap-2 text-sm text-brand/70">
+                            <span class="text-amber-500">★</span>
+                            <span class="font-semibold">{{ stats.avg }} / 5</span>
+                            <span class="text-xs text-brand/50">({{ stats.count }} reviews)</span>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
                     </div>
                     <div class="plan-rating-pill">
                         <div class="plan-rating-pill__icon" aria-hidden="true">★</div>
@@ -146,17 +155,20 @@
                     {% endfor %}
                 </div>
                 <div class="mt-6 grid grid-cols-1 gap-3">
-                    <details class="border border-slate-100 rounded-2xl p-4 bg-[#f9fbff]">
-                        <summary class="font-semibold text-brand cursor-pointer flex items-center justify-between">
-                            Add-ons
-                            <span class="text-xs text-brand/60">Personalize coverage</span>
-                        </summary>
+                    <div class="border border-slate-100 rounded-2xl bg-[#f9fbff]">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg font-semibold text-brand">Add-ons</span>
+                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-brand/5 text-brand/70 border border-brand/10">Optional</span>
+                            </div>
+                            <span class="text-sm text-brand/60">Personalize coverage</span>
+                        </div>
                         {% if user.is_authenticated %}
-                        <form method="post" action="{% url 'addons_select' plan.plan_id %}" class="mt-3 space-y-2">
+                        <form method="post" action="{% url 'addons_select' plan.plan_id %}" class="p-4 space-y-3">
                             {% csrf_token %}
                             {% for addon in addons_catalog %}
                                 {% with selected=session_addons|get_item:plan.plan_id %}
-                                <label class="flex items-start gap-3 p-2 rounded-xl hover:bg-white border border-transparent hover:border-slate-100">
+                                <label class="flex items-start gap-3 p-3 rounded-xl bg-white border border-slate-100 hover:border-brand/20 hover:shadow-sm transition">
                                     <input type="checkbox" name="addons" value="{{ addon.code }}" class="mt-1 accent-[#635bff]"
                                         {% if selected and addon.code in selected %}checked{% endif %}>
                                     <div class="flex-1">
@@ -170,14 +182,14 @@
                                 </label>
                                 {% endwith %}
                             {% endfor %}
-                            <button type="submit" class="w-full text-sm font-semibold text-brand underline">Save add-ons</button>
+                            <button type="submit" class="w-full text-sm font-semibold text-white bg-brand rounded-xl py-2.5 hover:bg-[#0c2f52] transition">Save add-ons</button>
                         </form>
                         {% else %}
-                        <div class="mt-3 text-sm text-brand/70">
+                        <div class="p-4 text-sm text-brand/70">
                             <a href="{% url 'login' %}?next={% url 'product' %}" class="font-semibold underline">Login</a> to select add-ons and see your personalized plan.
                         </div>
                         {% endif %}
-                    </details>
+                    </div>
                     {% if plan.plan_url %}
                     <a class="gradient-button w-full" href="{% url 'plan_redirect' plan.plan_id %}" target="_blank" rel="noopener noreferrer">Select Plan</a>
                     <p class="text-xs text-brand/50 text-center">Opens the insurer&#39;s site in a new tab.</p>
@@ -202,11 +214,100 @@
                     {% else %}
                     <a href="{% url 'login' %}?next={% url 'product' %}" class="w-full inline-flex justify-center border border-brand/10 text-brand font-semibold rounded-xl py-2.5 hover:bg-brand hover:text-white transition">Login to save this plan</a>
                     {% endif %}
+                    <div class="mt-3 border-t border-slate-100 pt-3">
+                        <p class="text-sm font-semibold text-brand mb-2">Reviews</p>
+                        {% with stats=review_stats|get_item:plan.plan_id %}
+                        {% if stats and stats.items %}
+                            {% for review in stats.items|slice:":2" %}
+                            <div class="text-sm text-brand/70 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-amber-500">★ {{ review.rating }}</span>
+                                    <span class="text-xs text-brand/50">{{ review.created_at|date:"M d, Y" }}</span>
+                                </div>
+                                {% if review.title %}<p class="font-semibold text-brand">{{ review.title }}</p>{% endif %}
+                                <p>{{ review.body|default:"No comment" }}</p>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-xs text-brand/50">No reviews yet.</p>
+                        {% endif %}
+                        {% endwith %}
+                        {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'submit_review' plan.plan_id %}" class="mt-2 space-y-2">
+                            {% csrf_token %}
+                            <div class="flex items-center gap-2 text-sm">
+                                <label class="text-brand font-semibold">Rating</label>
+                                <select name="rating" class="rounded-lg border border-slate-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent text-sm">
+                                    {% for i in "12345" %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <input type="text" name="title" placeholder="Title (optional)" class="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent text-sm">
+                            <textarea name="body" rows="2" placeholder="Share your feedback" class="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent text-sm"></textarea>
+                            <button type="submit" class="w-full text-sm font-semibold text-brand underline">Submit review</button>
+                        </form>
+                        {% else %}
+                        <p class="text-xs text-brand/50 mt-2">Login to leave a review.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
+
+    {% if recommended_plans %}
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-brand">Recommended for you</h2>
+            <span class="text-xs text-brand/60">Based on your profile</span>
+        </div>
+        <div class="grid gap-4 md:grid-cols-3">
+            {% for plan in recommended_plans %}
+            <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-floating">
+                <div class="flex items-center justify-between text-xs text-brand/70 mb-2">
+                    <span class="px-2 py-1 rounded-full bg-brand/5 border border-brand/10">Match</span>
+                    {% if saved_pack_ids and plan.plan_id in saved_pack_ids %}
+                    <span class="text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-full">Saved</span>
+                    {% endif %}
+                </div>
+                <p class="text-xs uppercase tracking-wide text-brand/60">{{ plan.provider }}</p>
+                <h3 class="text-lg font-semibold text-brand">{{ plan.plan_name }}</h3>
+                <p class="text-xs text-brand/60">{{ plan.audience_label }}</p>
+                <div class="mt-2 text-xs text-brand/60 flex flex-wrap gap-2">
+                    {% for city in plan.cities|slice:":2" %}
+                    <span class="px-2 py-1 rounded-full bg-slate-50 border border-slate-100">{{ city }}</span>
+                    {% endfor %}
+                </div>
+                <div class="mt-3 flex items-center gap-2 text-sm text-brand/70">
+                    <span class="text-amber-500">★</span>
+                    <span class="font-semibold">{{ plan.rating|default:'4.6' }}/5</span>
+                </div>
+                <div class="mt-4 flex gap-2">
+                    {% if user.is_authenticated %}
+                        {% if saved_pack_ids and plan.plan_id in saved_pack_ids %}
+                        <a href="{% url 'packs_list' %}" class="text-xs font-semibold text-brand underline">View saved</a>
+                        {% else %}
+                        <form method="post" action="{% url 'pack_save' plan.plan_id %}">
+                            {% csrf_token %}
+                            {% with selected=session_addons|get_item:plan.plan_id %}
+                            {% for addon in selected %}
+                                <input type="hidden" name="addons" value="{{ addon }}">
+                            {% endfor %}
+                            {% endwith %}
+                            <button type="submit" class="text-xs font-semibold text-brand underline">Save plan</button>
+                        </form>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'login' %}?next={% url 'product' %}" class="text-xs font-semibold text-brand underline">Login to save</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <div class="space-y-6">
         <h2 class="text-2xl font-semibold">Compare plans side by side</h2>

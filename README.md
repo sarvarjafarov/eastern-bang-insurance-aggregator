@@ -76,4 +76,10 @@ A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-ban
 
 - Signup/login/logout: `/account/signup/`, `/account/login/`, `/account/logout/`
 - Profile: `/account/profile/`
-- Saved plans: `/account/packs/` with create/edit/detail pages (legacy aliases `/account/deals/...`). Access is restricted to the signed-in user’s own records.
+- Saved plans: `/account/packs/` with create/edit/detail pages (legacy aliases `/account/deals/...`). Access is restricted to the signed-in user’s own records. Profile includes preferences (member type, city, budget, providers, deductible preference, language, communication opts) that prefill the browse experience. Recent activity and documents are shown on the profile.
+- Documents: `/account/documents/` to track verification/claims links with status.
+- Notifications: `/account/notifications/` to view and mark alerts as read.
+- Support tickets: `/account/support/` to open and track support requests.
+- Security: `/account/security/` to log out or delete the account.
+- Billing: `/account/billing/` to add and view billing records.
+- Onboarding checklist: visible on `/account/profile/` showing progress across preferences, saved plans, add-ons, reviews, documents, support, and billing steps.

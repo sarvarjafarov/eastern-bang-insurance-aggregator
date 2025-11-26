@@ -161,6 +161,15 @@ class UserProfile(TimeStampedModel):
     full_name = models.CharField(max_length=120, blank=True)
     phone = models.CharField(max_length=40, blank=True)
     organization = models.CharField(max_length=120, blank=True)
+    preferred_member = models.CharField(max_length=40, blank=True)
+    preferred_city = models.CharField(max_length=120, blank=True)
+    budget_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    budget_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    preferred_providers = models.CharField(max_length=255, blank=True)
+    deductible_preference = models.CharField(max_length=40, blank=True)
+    language = models.CharField(max_length=20, blank=True)
+    comms_email = models.BooleanField(default=True)
+    comms_push = models.BooleanField(default=False)
 
     def __str__(self):
         return self.full_name or self.user.get_username()
@@ -191,3 +200,147 @@ class Pack(TimeStampedModel):
 
     def __str__(self):
         return f"{self.plan_name} ({self.get_status_display()})"
+
+
+class Review(TimeStampedModel):
+    RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
+
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='reviews')
+    plan_id = models.IntegerField()
+    plan_name = models.CharField(max_length=200)
+    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+    title = models.CharField(max_length=120, blank=True)
+    body = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['plan_id']),
+        ]
+
+    def __str__(self):
+        return f"{self.plan_name} · {self.rating}★"
+
+
+class Activity(TimeStampedModel):
+    ACTION_CHOICES = [
+        ('saved_plan', 'Saved plan'),
+        ('updated_addons', 'Updated add-ons'),
+        ('review_submitted', 'Review submitted'),
+        ('viewed_plan', 'Viewed plan'),
+        ('document_added', 'Document added'),
+        ('support_opened', 'Support opened'),
+        ('billing_updated', 'Billing updated'),
+    ]
+
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='activities')
+    action = models.CharField(max_length=40, choices=ACTION_CHOICES)
+    plan_id = models.IntegerField(null=True, blank=True)
+    plan_name = models.CharField(max_length=200, blank=True)
+    meta = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['plan_id']),
+        ]
+
+    def __str__(self):
+        return f"{self.user} · {self.get_action_display()}"
+
+
+class Document(TimeStampedModel):
+    STATUS_CHOICES = [
+        ('pending', 'Pending review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    TYPE_CHOICES = [
+        ('id', 'ID / Passport'),
+        ('coverage', 'Proof of coverage'),
+        ('claim', 'Claim receipt'),
+        ('other', 'Other'),
+    ]
+
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='documents')
+    title = models.CharField(max_length=150)
+    doc_type = models.CharField(max_length=40, choices=TYPE_CHOICES, default='other')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    file_url = models.URLField(blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-updated_at', '-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({self.get_status_display()})"
+
+
+class Notification(TimeStampedModel):
+    TYPE_CHOICES = [
+        ('renewal', 'Renewal'),
+        ('plan_update', 'Plan update'),
+        ('claim', 'Claim'),
+        ('review', 'Review'),
+        ('general', 'General'),
+    ]
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=150)
+    body = models.TextField(blank=True)
+    notif_type = models.CharField(max_length=40, choices=TYPE_CHOICES, default='general')
+    link = models.URLField(blank=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['is_read', '-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({'read' if self.is_read else 'unread'})"
+
+
+class SupportTicket(TimeStampedModel):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_progress', 'In progress'),
+        ('closed', 'Closed'),
+    ]
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('normal', 'Normal'),
+        ('high', 'High'),
+    ]
+
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='tickets')
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal')
+    link = models.URLField(blank=True)
+    resolution = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-updated_at', '-created_at']
+
+    def __str__(self):
+        return f"{self.subject} ({self.get_status_display()})"
+
+
+class BillingRecord(TimeStampedModel):
+    STATUS_CHOICES = [
+        ('due', 'Due'),
+        ('paid', 'Paid'),
+        ('overdue', 'Overdue'),
+    ]
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='billing_records')
+    title = models.CharField(max_length=150)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='due')
+    due_date = models.DateField(null=True, blank=True)
+    invoice_url = models.URLField(blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-updated_at', '-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({self.get_status_display()})"

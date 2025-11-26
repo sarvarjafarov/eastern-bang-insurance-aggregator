@@ -92,5 +92,44 @@
         </div>
     </div>
     {% endif %}
+    {% if reviews %}
+    <div class="bg-white shadow-floating rounded-2xl p-8 border border-slate-100 space-y-3">
+        <div class="flex items-center justify-between">
+            <h3 class="text-xl font-semibold text-brand">Reviews</h3>
+            {% if plan %}
+            <a href="{% url 'product' %}#plan-{{ plan.plan_id }}" class="text-sm font-semibold text-brand underline">Back to plan</a>
+            {% endif %}
+        </div>
+        {% for review in reviews %}
+            <div class="border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2 text-sm text-brand/70">
+                    <span class="text-amber-500">★ {{ review.rating }}</span>
+                    <span class="text-xs text-brand/50">{{ review.created_at|date:"M d, Y" }}</span>
+                </div>
+                {% if review.title %}<p class="font-semibold text-brand">{{ review.title }}</p>{% endif %}
+                <p class="text-sm text-brand/70">{{ review.body|default:"No comment" }}</p>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if user.is_authenticated and plan %}
+    <div class="bg-white shadow-floating rounded-2xl p-8 border border-slate-100">
+        <h3 class="text-lg font-semibold text-brand mb-3">Add your review</h3>
+        <form method="post" action="{% url 'submit_review' plan.plan_id %}" class="space-y-3">
+            {% csrf_token %}
+            <div class="flex items-center gap-2 text-sm">
+                <label class="text-brand font-semibold">Rating</label>
+                <select name="rating" class="rounded-lg border border-slate-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent text-sm">
+                    {% for i in "12345" %}
+                    <option value="{{ i }}">{{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <input type="text" name="title" placeholder="Title (optional)" class="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent text-sm">
+            <textarea name="body" rows="3" placeholder="Share your feedback" class="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent text-sm"></textarea>
+            <button type="submit" class="gradient-button text-sm font-semibold">Submit review</button>
+        </form>
+    </div>
+    {% endif %}
 </section>
 {% endblock %}
