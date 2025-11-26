@@ -75,15 +75,23 @@
                     <a href="{% url 'product' %}" class="nav-link">Product</a>
                     <a href="{% url 'contact' %}" class="nav-link">Contact</a>
                     {% if user.is_authenticated %}
-                        <div class="flex items-center gap-3">
-                            <a href="{% url 'packs_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Saved</a>
-                            <a href="{% url 'documents_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Docs</a>
-                            <a href="{% url 'notifications_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Alerts</a>
-                            <a href="{% url 'support_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Support</a>
-                            <a href="{% url 'billing_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Billing</a>
-                            <a href="{% url 'security' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Security</a>
-                            <a href="{% url 'profile' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Profile</a>
-                            <a href="{% url 'logout' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Logout</a>
+                        <div class="relative">
+                            <button id="profileMenuButton" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+                                Profile
+                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 rounded-xl border border-slate-100 bg-white shadow-lg shadow-slate-200/60 py-2 text-sm">
+                                <a href="{% url 'packs_list' %}" class="block px-4 py-2 hover:bg-slate-50">Saved</a>
+                                <a href="{% url 'documents_list' %}" class="block px-4 py-2 hover:bg-slate-50">Docs</a>
+                                <a href="{% url 'notifications_list' %}" class="block px-4 py-2 hover:bg-slate-50">Alerts</a>
+                                <a href="{% url 'support_list' %}" class="block px-4 py-2 hover:bg-slate-50">Support</a>
+                                <a href="{% url 'billing_list' %}" class="block px-4 py-2 hover:bg-slate-50">Billing</a>
+                                <a href="{% url 'security' %}" class="block px-4 py-2 hover:bg-slate-50">Security</a>
+                                <a href="{% url 'profile' %}" class="block px-4 py-2 hover:bg-slate-50">Profile</a>
+                                <a href="{% url 'logout' %}" class="block px-4 py-2 hover:bg-slate-50">Logout</a>
+                            </div>
                         </div>
                     {% else %}
                         <a href="{% url 'login' %}" class="nav-link">Login</a>
@@ -99,10 +107,13 @@
                     <a href="{% url 'product' %}" class="nav-link">Product</a>
                     <a href="{% url 'contact' %}" class="nav-link">Contact</a>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'packs_list' %}" class="nav-link">Saved plans</a>
-                        <a href="{% url 'documents_list' %}" class="nav-link">Documents</a>
-                        <a href="{% url 'notifications_list' %}" class="nav-link">Notifications</a>
+                        <p class="text-xs uppercase tracking-wide text-slate-500 mt-2">Profile</p>
+                        <a href="{% url 'packs_list' %}" class="nav-link">Saved</a>
+                        <a href="{% url 'documents_list' %}" class="nav-link">Docs</a>
+                        <a href="{% url 'notifications_list' %}" class="nav-link">Alerts</a>
                         <a href="{% url 'support_list' %}" class="nav-link">Support</a>
+                        <a href="{% url 'billing_list' %}" class="nav-link">Billing</a>
+                        <a href="{% url 'security' %}" class="nav-link">Security</a>
                         <a href="{% url 'profile' %}" class="nav-link">Profile</a>
                         <a href="{% url 'logout' %}" class="nav-link">Logout</a>
                     {% else %}
@@ -163,6 +174,8 @@
             const mobileNav = document.getElementById('mobileNav');
             const iconOpen = document.getElementById('navIconOpen');
             const iconClose = document.getElementById('navIconClose');
+            const profileButton = document.getElementById('profileMenuButton');
+            const profileDropdown = document.getElementById('profileDropdown');
 
             toggle.addEventListener('click', () => {
                 mobileNav.classList.toggle('hidden');
@@ -177,6 +190,17 @@
                     iconClose.classList.add('hidden');
                 }
             });
+
+            if (profileButton && profileDropdown) {
+                profileButton.addEventListener('click', () => {
+                    profileDropdown.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!profileDropdown.contains(e.target) && !profileButton.contains(e.target)) {
+                        profileDropdown.classList.add('hidden');
+                    }
+                });
+            }
         });
     </script>
     {% block body_scripts %}{% endblock %}

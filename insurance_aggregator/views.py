@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from .forms import DocumentForm, PackForm, ProfileForm, ReviewForm, SignupForm, SupportTicketForm
+from .forms import BillingRecordForm, DocumentForm, PackForm, ProfileForm, ReviewForm, SignupForm, SupportTicketForm
 from .analytics import (
     record_metric,
     record_metric_once,
@@ -399,13 +399,21 @@ def product(request):
     member_options, default_member = _member_options_with_defaults()
     record_metric_once(request, 'plan_profile_view')
 
+    profile = None
+    if request.user.is_authenticated:
+        profile = _get_or_create_profile(request.user)
+
     selected_member = _sanitize_member_choice(
         request.GET.get('member') or (profile.preferred_member if profile else default_member) or default_member,
         {option['value'] for option in member_options},
         default_member,
     )
     selected_age = _parse_age(request.GET.get('age'))
-    selected_city = request.GET.get('city') or ((profile.preferred_city if profile else None) or cities[0])
+    if profile and profile.preferred_city and profile.preferred_city in cities:
+        fallback_city = profile.preferred_city
+    else:
+        fallback_city = cities[0]
+    selected_city = request.GET.get('city') or fallback_city
     if selected_city not in cities:
         selected_city = cities[0]
 
