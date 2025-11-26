@@ -13,9 +13,10 @@
             </div>
         </div>
         <div class="grid md:grid-cols-3 gap-4 mb-6">
+            {% if user.profile %}
             <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-floating">
                 <p class="text-xs uppercase tracking-wide text-slate-500">Preferences</p>
-                <p class="text-sm text-brand/70">Member: {{ request.user.profile.preferred_member|default:"-" }}, City: {{ request.user.profile.preferred_city|default:"-" }}</p>
+                <p class="text-sm text-brand/70">Member: {{ user.profile.preferred_member|default:"-" }}, City: {{ user.profile.preferred_city|default:"-" }}</p>
             </div>
             <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-floating">
                 <p class="text-xs uppercase tracking-wide text-slate-500">Alerts</p>
@@ -25,12 +26,14 @@
                 <p class="text-xs uppercase tracking-wide text-slate-500">Support</p>
                 <p class="text-sm text-brand/70"><a href="{% url 'support_list' %}" class="font-semibold underline">Open ticket</a></p>
             </div>
+            {% endif %}
         </div>
         {% if packs %}
         <div class="grid gap-4 md:grid-cols-2">
             {% for pack in packs %}
-            {% with snapshot=plan_snapshots|get_item:pack.plan_id %}
-            <a href="{% url 'pack_detail' pack.id %}" class="block bg-white border border-slate-100 rounded-2xl shadow-floating p-5 hover:-translate-y-0.5 transition">
+                {% with snapshot=plan_snapshots|default:{} %}
+                {% with snap=snapshot|get_item:pack.plan_id %}
+                <a href="{% url 'pack_detail' pack.id %}" class="block bg-white border border-slate-100 rounded-2xl shadow-floating p-5 hover:-translate-y-0.5 transition">
                     <div class="flex items-center justify-between gap-2">
                         <div>
                             <h3 class="text-lg font-semibold text-brand">{{ pack.plan_name }}</h3>
@@ -46,15 +49,16 @@
                         {% endfor %}
                     </div>
                     {% endif %}
-                    {% if snapshot %}
+                    {% if snap %}
                     <div class="flex flex-wrap gap-2 mt-2 text-xs text-slate-500">
-                        {% for tag in snapshot.tags|slice:":3" %}
+                        {% for tag in snap.tags|slice:":3" %}
                         <span class="px-2 py-1 rounded-full bg-slate-50 border border-slate-100">{{ tag }}</span>
                         {% endfor %}
                     </div>
                     {% endif %}
                     <div class="text-xs text-slate-500 mt-3">Updated {{ pack.updated_at|date:"M d, Y" }}</div>
                 </a>
+                {% endwith %}
                 {% endwith %}
             {% endfor %}
         </div>
@@ -65,3 +69,4 @@
     {% endif %}
 </section>
 {% endblock %}
+{% load extras %}

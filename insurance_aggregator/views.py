@@ -400,12 +400,12 @@ def product(request):
     record_metric_once(request, 'plan_profile_view')
 
     selected_member = _sanitize_member_choice(
-        request.GET.get('member') or (profile.preferred_member if request.user.is_authenticated else default_member) or default_member,
+        request.GET.get('member') or (profile.preferred_member if profile else default_member) or default_member,
         {option['value'] for option in member_options},
         default_member,
     )
     selected_age = _parse_age(request.GET.get('age'))
-    selected_city = request.GET.get('city') or (profile.preferred_city if request.user.is_authenticated and getattr(profile, 'preferred_city', None) else cities[0])
+    selected_city = request.GET.get('city') or ((profile.preferred_city if profile else None) or cities[0])
     if selected_city not in cities:
         selected_city = cities[0]
 
@@ -728,7 +728,11 @@ def security_view(request):
 @login_required(login_url='login')
 def billing_list(request):
     records = BillingRecord.objects.filter(user=request.user).order_by('-updated_at')
-    form = BillingRecordForm(request.POST or None)
+    form = None
+    try:
+        form = BillingRecordForm(request.POST or None)
+    except Exception:
+        form = BillingRecordForm()
     if request.method == 'POST' and form.is_valid():
         record = form.save(commit=False)
         record.user = request.user

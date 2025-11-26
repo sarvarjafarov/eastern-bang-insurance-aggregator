@@ -55,42 +55,44 @@
 </head>
 <body class="bg-[#f6f9fc] text-brand font-sans antialiased selection:bg-[#c7d2fe] selection:text-brand scroll-smooth">
     <div class="min-h-screen flex flex-col site-shell">
-        <header class="sticky top-0 z-40 bg-[#f6f9fc]/90 backdrop-blur border-b border-white/30">
-            <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-100 shadow-sm">
+            <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
                 <a href="{% url 'home' %}" class="flex items-center gap-3 flex-shrink-0">
-                    <img src="{% static 'img/insurance_biddy_logo-main.png' %}" alt="Insurance Buddy" class="h-[4.5rem] w-auto" loading="lazy" width="222" height="116" />
+                    <img src="{% static 'img/insurance_biddy_logo-main.png' %}" alt="Insurance Buddy" class="h-10 w-auto" loading="lazy" width="222" height="116" />
                     <span class="sr-only">Insurance Buddy</span>
                 </a>
-            <button id="navToggle" class="md:hidden p-2 rounded-full border border-brand/10 text-brand hover:bg-white/60 transition" aria-label="Toggle navigation">
-                <svg id="navIconOpen" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M4 6h16M4 12h16M4 18h16" stroke-width="2" stroke-linecap="round"></path>
-                </svg>
-                <svg id="navIconClose" class="h-5 w-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M6 6l12 12M6 18L18 6" stroke-width="2" stroke-linecap="round"></path>
-                </svg>
-            </button>
-                <nav id="mainNav" class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <button id="navToggle" class="md:hidden p-2 rounded-lg border border-slate-200 text-brand hover:bg-slate-50 transition" aria-label="Toggle navigation">
+                    <svg id="navIconOpen" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M4 6h16M4 12h16M4 18h16" stroke-width="2" stroke-linecap="round"></path>
+                    </svg>
+                    <svg id="navIconClose" class="h-5 w-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M6 6l12 12M6 18L18 6" stroke-width="2" stroke-linecap="round"></path>
+                    </svg>
+                </button>
+                <nav id="mainNav" class="hidden md:flex items-center gap-3 text-sm font-semibold text-slate-700">
                     <a href="{% url 'home' %}" class="nav-link">Home</a>
                     <a href="{% url 'about' %}" class="nav-link">About</a>
                     <a href="{% url 'product' %}" class="nav-link">Product</a>
                     <a href="{% url 'contact' %}" class="nav-link">Contact</a>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'packs_list' %}" class="nav-link">Saved plans</a>
-                        <a href="{% url 'documents_list' %}" class="nav-link">Documents</a>
-                        <a href="{% url 'notifications_list' %}" class="nav-link">Notifications</a>
-                        <a href="{% url 'support_list' %}" class="nav-link">Support</a>
-                        <a href="{% url 'billing_list' %}" class="nav-link">Billing</a>
-                        <a href="{% url 'security' %}" class="nav-link">Security</a>
-                        <a href="{% url 'profile' %}" class="nav-link">Profile</a>
-                        <a href="{% url 'logout' %}" class="nav-link">Logout</a>
+                        <div class="flex items-center gap-3">
+                            <a href="{% url 'packs_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Saved</a>
+                            <a href="{% url 'documents_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Docs</a>
+                            <a href="{% url 'notifications_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Alerts</a>
+                            <a href="{% url 'support_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Support</a>
+                            <a href="{% url 'billing_list' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Billing</a>
+                            <a href="{% url 'security' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Security</a>
+                            <a href="{% url 'profile' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Profile</a>
+                            <a href="{% url 'logout' %}" class="nav-link px-3 py-2 rounded-lg hover:bg-slate-50">Logout</a>
+                        </div>
                     {% else %}
                         <a href="{% url 'login' %}" class="nav-link">Login</a>
                         <a href="{% url 'signup' %}" class="nav-link">Sign up</a>
                     {% endif %}
-                    <a href="{% url 'product' %}" class="gradient-button text-sm font-semibold md:ml-2">Compare Plans</a>
+                    <a href="{% url 'product' %}" class="gradient-button text-sm font-semibold md:ml-2 shadow-lg shadow-brand/20">Compare Plans</a>
                 </nav>
             </div>
-            <div id="mobileNav" class="md:hidden hidden border-t border-white/50 bg-[#f6f9fc]/95 backdrop-blur">
+            <div id="mobileNav" class="md:hidden hidden border-t border-slate-100 bg-white/95 backdrop-blur">
                 <div class="px-6 py-4 flex flex-col gap-3 text-sm font-semibold text-brand">
                     <a href="{% url 'home' %}" class="nav-link">Home</a>
                     <a href="{% url 'about' %}" class="nav-link">About</a>
@@ -107,7 +109,7 @@
                         <a href="{% url 'login' %}" class="nav-link">Login</a>
                         <a href="{% url 'signup' %}" class="nav-link">Sign up</a>
                     {% endif %}
-                    <a href="{% url 'product' %}" class="gradient-button w-full text-center">Compare Plans</a>
+                    <a href="{% url 'product' %}" class="gradient-button w-full text-center shadow-lg shadow-brand/20">Compare Plans</a>
                 </div>
             </div>
         </header>
