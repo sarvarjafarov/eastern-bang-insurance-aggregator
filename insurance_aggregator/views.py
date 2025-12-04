@@ -62,7 +62,7 @@ TEAM_NICKNAMES = [
     nickname.strip()
     for nickname in os.environ.get(
         'TEAM_NICKNAMES',
-        'cheerful-newt, careful-deer, silly-elephant, clever-crocodile, eastern-bang',
+        'cheerful-newt, careful-deer, silly-elephant, clever-crocodile, careful-deer',
     ).split(',')
     if nickname.strip()
 ]
