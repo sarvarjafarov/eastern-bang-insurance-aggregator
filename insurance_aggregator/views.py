@@ -988,6 +988,8 @@ def abtest_endpoint(request):
         request.session['abtest_variant'] = variant
         request.session.modified = True
 
+    # Count traffic hitting the A/B page so it surfaces in the dashboard pipeline.
+    track_acquisition(request)
     record_metric('abtest_page_view')
     record_metric(f'abtest_variant_{variant}')
 
