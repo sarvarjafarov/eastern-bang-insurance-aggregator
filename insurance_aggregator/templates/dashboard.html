@@ -101,6 +101,34 @@
         {% endif %}
     </div>
 
+    <div class="bg-white rounded-3xl shadow-floating border border-brand/5 p-6 space-y-5">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm uppercase tracking-wide text-brand/50">A/B test</p>
+                <h2 class="text-xl font-semibold text-brand">Button clicks</h2>
+                <p class="text-sm text-brand/60">Internal tracking from /ef1ca11/</p>
+            </div>
+            <p class="text-3xl font-semibold text-brand">{{ abtest_click_total|intcomma }}</p>
+        </div>
+        {% if abtest_click_breakdown %}
+        <div class="space-y-4">
+            {% for item in abtest_click_breakdown %}
+            <div>
+                <div class="flex items-center justify-between text-sm">
+                    <p class="font-medium text-brand">{{ item.label }}</p>
+                    <p class="font-semibold text-brand">{{ item.value|intcomma }} <span class="text-xs text-brand/60">({{ item.share }}%)</span></p>
+                </div>
+                <div class="mt-2 h-2 rounded-full bg-brand/5 overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-brand to-accent" style="width: {{ item.share }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-brand/60">Clicks will appear here after users interact with the A/B button.</p>
+        {% endif %}
+    </div>
+
     {% if plan_engagement %}
     <div class="bg-white rounded-3xl shadow-floating border border-brand/5 p-6">
         <div class="flex items-center justify-between mb-5">

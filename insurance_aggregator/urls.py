@@ -28,6 +28,7 @@ urlpatterns = [
     path('contact/', views.contact, name='contact'),
     path('api/traffic/', views.traffic_ingest, name='traffic_ingest'),
     path('ef1ca11/', views.abtest_endpoint, name='abtest_endpoint'),
+    path('ef1ca11/click/', views.abtest_click_endpoint, name='abtest_click_endpoint'),
     path('account/signup/', views.signup_view, name='signup'),
     path('account/login/', views.login_view, name='login'),
     path('account/logout/', views.logout_view, name='logout'),

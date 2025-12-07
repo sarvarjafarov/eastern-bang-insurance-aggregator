@@ -905,6 +905,15 @@ def dashboard(request):
     plan_engagement.sort(key=lambda entry: (entry['clicks'], entry['impressions']), reverse=True)
     plan_engagement = plan_engagement[:4]
 
+    abtest_click_total = get_metric_total('abtest_click')
+    abtest_click_kudos = get_metric_total('abtest_click_kudos')
+    abtest_click_thanks = get_metric_total('abtest_click_thanks')
+    abtest_click_breakdown = []
+    if abtest_click_total:
+        for label, value in (('Kudos', abtest_click_kudos), ('Thanks', abtest_click_thanks)):
+            share = int(round((value / abtest_click_total) * 100)) if abtest_click_total else 0
+            abtest_click_breakdown.append({'label': label, 'value': value, 'share': share})
+
     context = {
         'plan_count': plan_count,
         'city_count': city_count,
@@ -918,6 +927,8 @@ def dashboard(request):
         'product_health': product_health,
         'traffic_summary': traffic_summary,
         'plan_engagement': plan_engagement,
+        'abtest_click_total': abtest_click_total,
+        'abtest_click_breakdown': abtest_click_breakdown,
     }
     return render(request, 'dashboard.html', context)
 
@@ -1053,6 +1064,12 @@ def abtest_endpoint(request):
                 var btn = document.getElementById('abtest');
                 if (!btn) return;
                 btn.addEventListener('click', function() {{
+                    // Record internal metric for button clicks.
+                    fetch('/ef1ca11/click/', {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        body: JSON.stringify({{ variant: '{variant}' }})
+                    }}).catch(function(err) {{ console.warn('abtest click tracking failed', err); }});
                     // Lightweight click tracking for analytics tools already on the page.
                     if (typeof gtag === 'function') {{
                         gtag('event', 'abtest_click', {{ variant: '{variant}' }});
@@ -1068,6 +1085,27 @@ def abtest_endpoint(request):
     </html>
     """
     return HttpResponse(html)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def abtest_click_endpoint(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        payload = {}
+
+    variant = str(payload.get('variant') or '').strip()
+    if variant not in ('kudos', 'thanks'):
+        variant = request.session.get('abtest_variant') or ''
+    if variant not in ('kudos', 'thanks'):
+        variant = ''
+
+    record_metric('abtest_click')
+    if variant:
+        record_metric(f'abtest_click_{variant}')
+
+    return JsonResponse({'status': 'ok', 'variant': variant or None}, status=201)
 
 
 def plan_redirect(request, plan_id: str):
