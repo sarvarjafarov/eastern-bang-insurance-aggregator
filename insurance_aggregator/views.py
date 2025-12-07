@@ -1086,7 +1086,10 @@ def abtest_endpoint(request):
     </body>
     </html>
     """
-    return HttpResponse(html)
+    response = HttpResponse(html)
+    # Explicitly allow framing for Yandex Metrica/Webvisor click maps.
+    response['X-Frame-Options'] = 'ALLOWALL'
+    return response
 
 
 @csrf_exempt
