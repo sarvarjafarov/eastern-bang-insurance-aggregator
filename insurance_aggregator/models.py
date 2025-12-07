@@ -143,6 +143,26 @@ class ContactPageContent(TimeStampedModel):
         return 'Contact Page Content'
 
 
+class SiteMetadata(TimeStampedModel):
+    meta_title = models.CharField(max_length=255, default='Insurance Buddy')
+    meta_description = models.TextField(
+        default='Insurance Buddy helps international students compare travel and health insurance plans designed for life in the U.S.'
+    )
+    meta_image_path = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Relative path inside static files (e.g., img/meta-share.png) or a full URL.',
+        default='img/insure-buddy-meta-image.png',
+    )
+
+    class Meta:
+        verbose_name = 'Site metadata'
+        verbose_name_plural = 'Site metadata'
+
+    def __str__(self):
+        return self.meta_title or 'Site metadata'
+
+
 class DailyMetric(TimeStampedModel):
     date = models.DateField()
     metric = models.CharField(max_length=120)
