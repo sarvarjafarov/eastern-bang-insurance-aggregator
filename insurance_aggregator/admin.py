@@ -50,3 +50,17 @@ class AudienceSegmentAdmin(admin.ModelAdmin):
 @admin.register(models.ContactPageContent)
 class ContactPageContentAdmin(admin.ModelAdmin):
     list_display = ('headline', 'support_email', 'updated_at')
+
+
+@admin.register(models.SiteMetadata)
+class SiteMetadataAdmin(admin.ModelAdmin):
+    list_display = ('meta_title', 'updated_at')
+    fieldsets = (
+        (None, {'fields': ('meta_title', 'meta_description')}),
+        ('Images', {'fields': ('meta_image_path',)}),
+    )
+
+    def has_add_permission(self, request):
+        if models.SiteMetadata.objects.exists():
+            return False
+        return super().has_add_permission(request)

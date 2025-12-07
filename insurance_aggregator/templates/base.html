@@ -4,7 +4,18 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Insurance Buddy helps international students compare travel and health insurance plans designed for life in the U.S." />
+    <meta name="description" content="{{ SITE_META_DESCRIPTION }}" />
+    <meta property="og:title" content="{{ SITE_META_TITLE }}" />
+    <meta property="og:description" content="{{ SITE_META_DESCRIPTION }}" />
+    <meta property="og:type" content="website" />
+    {% if SITE_META_URL %}<meta property="og:url" content="{{ SITE_META_URL }}" />{% endif %}
+    {% if SITE_META_IMAGE %}<meta property="og:image" content="{{ SITE_META_IMAGE }}" />{% endif %}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ SITE_META_TITLE }}" />
+    <meta name="twitter:description" content="{{ SITE_META_DESCRIPTION }}" />
+    {% if SITE_META_IMAGE %}<meta name="twitter:image" content="{{ SITE_META_IMAGE }}" />{% endif %}
+    <link rel="icon" href="{% static 'img/insurance-buddy-favicon.png' %}" type="image/png" />
+    <link rel="apple-touch-icon" href="{% static 'img/insurance-buddy-favicon.png' %}" />
     {% if GA_MEASUREMENT_ID %}
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ GA_MEASUREMENT_ID }}"></script>
@@ -30,7 +41,7 @@
     </script>
     <noscript><div><img src=\"https://mc.yandex.ru/watch/{{ YANDEX_METRICA_ID }}\" style=\"position:absolute; left:-9999px;\" alt=\"\" /></div></noscript>
     {% endif %}
-    <title>{% block title %}Insurance Buddy{% endblock %}</title>
+    <title>{% block title %}{{ SITE_META_TITLE }}{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />

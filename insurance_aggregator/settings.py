@@ -101,6 +101,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'insurance_aggregator.context_processors.analytics_ids',
+                'insurance_aggregator.context_processors.site_metadata',
             ],
         },
     },
