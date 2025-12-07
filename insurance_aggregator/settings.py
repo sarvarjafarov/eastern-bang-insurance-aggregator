@@ -72,6 +72,10 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 ]
 
+# Analytics IDs (must be set via environment for production/staging)
+GA_MEASUREMENT_ID = os.environ.get('GA_MEASUREMENT_ID', '')
+YANDEX_METRICA_ID = os.environ.get('YANDEX_METRICA_ID', '')
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -96,6 +100,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'insurance_aggregator.context_processors.analytics_ids',
             ],
         },
     },

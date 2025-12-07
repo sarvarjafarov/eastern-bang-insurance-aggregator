@@ -162,7 +162,6 @@ def _derive_tags(plan: dict) -> list:
     if plan.get('network_lower_cost'):
         tags.append('Best in-network pricing')
 
-    provider = plan.get('provider', '').lower()
     name = plan.get('plan_name', '').lower()
     if any(keyword in name for keyword in GOVERNMENT_KEYWORDS):
         tags.append('Government program')

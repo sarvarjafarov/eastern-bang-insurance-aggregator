@@ -72,6 +72,17 @@ curl -X POST http://localhost:8000/api/traffic/ \
 
 A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-bang")`). It lists your configured team nicknames and renders a button with id `abtest` whose label alternates between “kudos” and “thanks”; page views and variant assignments are recorded via the internal metrics system, and you can also attach Google Analytics or Yandex Metrica by setting `GA_MEASUREMENT_ID` or `YANDEX_METRICA_ID`.
 
+## Environments
+
+- Production (public): `https://eastern-bang-insurance-aggregator.onrender.com/` (Render web service with managed Postgres via `DATABASE_URL`).
+- Staging (public, for pre-prod testing): set up a second Render web service with its own database (e.g., `insurance-aggregator-staging`), pointing at the same repo/branch and using a separate `DATABASE_URL`. Include `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, and analytics IDs (`GA_MEASUREMENT_ID`, `YANDEX_METRICA_ID`) as needed.
+
+## Development
+
+- Install base deps: `pip install -r requirements.txt`
+- Install dev tools (lint): `pip install -r requirements-dev.txt`
+- Lint: `ruff check .` (auto-fix: `ruff check . --fix`)
+
 ## Accounts, profiles, saved plans
 
 - Signup/login/logout: `/account/signup/`, `/account/login/`, `/account/logout/`

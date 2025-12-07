@@ -2,9 +2,10 @@ import json
 import os
 import random
 from datetime import date
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -15,38 +16,54 @@ from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.clickjacking import xframe_options_exempt
 
-from .forms import BillingRecordForm, DocumentForm, PackForm, ProfileForm, ReviewForm, SignupForm, SupportTicketForm
 from .analytics import (
+    SOURCE_PREFIX,
+    get_metric_change_ratio,
+    get_metric_total,
+    get_plan_click_totals,
+    get_plan_impression_totals,
     record_metric,
     record_metric_once,
-    track_acquisition,
-    get_metric_total,
-    get_metric_change_ratio,
-    summarize_sources,
-    record_plan_impressions,
     record_plan_click,
-    get_plan_impression_totals,
-    get_plan_click_totals,
+    record_plan_impressions,
+    summarize_sources,
+    track_acquisition,
 )
-from .data_loader import comparison_fields, filter_plans, get_plan_by_id, get_unique_cities, load_plan_catalog, summarize_plans
+from .data_loader import (
+    comparison_fields,
+    filter_plans,
+    get_plan_by_id,
+    get_unique_cities,
+    load_plan_catalog,
+    summarize_plans,
+)
+from .forms import (
+    BillingRecordForm,
+    DocumentForm,
+    PackForm,
+    ProfileForm,
+    ReviewForm,
+    SignupForm,
+    SupportTicketForm,
+)
 from .models import (
     AboutPageContent,
+    Activity,
     AudienceSegment,
+    BillingRecord,
     ContactPageContent,
+    Document,
     HomePageContent,
+    Notification,
+    Pack,
     PartnerOrganization,
     ProductPageContent,
-    Pack,
-    Activity,
-    Document,
-    Notification,
-    BillingRecord,
-    SupportTicket,
     Review,
+    SupportTicket,
     UserProfile,
 )
 
@@ -67,9 +84,9 @@ TEAM_NICKNAMES = [
     ).split(',')
     if nickname.strip()
 ]
-# Default to the IDs already used on the main site so analytics remain consistent.
-GA_MEASUREMENT_ID = os.environ.get('GA_MEASUREMENT_ID', 'G-2EYT060RY4')
-YANDEX_METRICA_ID = os.environ.get('YANDEX_METRICA_ID', '105393946')
+# Analytics IDs come from settings/environment; left empty if unset.
+GA_MEASUREMENT_ID = getattr(settings, 'GA_MEASUREMENT_ID', '')
+YANDEX_METRICA_ID = getattr(settings, 'YANDEX_METRICA_ID', '')
 ADDONS_CATALOG = [
     {'code': 'dental', 'label': 'Dental & vision', 'description': 'Preventive care, cleanings, frames, lenses.', 'badge': 'Popular', 'price': '$12/mo'},
     {'code': 'accident', 'label': 'Accident rider', 'description': 'Covers ER visits and sports injuries.', 'badge': 'Active', 'price': '$9/mo'},
