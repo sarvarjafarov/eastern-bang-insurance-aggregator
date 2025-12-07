@@ -55,6 +55,9 @@ CSRF_TRUSTED_ORIGINS = [
     if host not in default_hosts
 ]
 
+# Allow framing so Yandex Metrica/Webvisor can render click maps across the site.
+X_FRAME_OPTIONS = 'ALLOWALL'
+
 
 # Application definition
 
