@@ -17,6 +17,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 from .forms import BillingRecordForm, DocumentForm, PackForm, ProfileForm, ReviewForm, SignupForm, SupportTicketForm
 from .analytics import (
@@ -992,6 +993,7 @@ def traffic_ingest(request):
     )
 
 
+@xframe_options_exempt
 def abtest_endpoint(request):
     variant = request.session.get('abtest_variant')
     if variant not in ('kudos', 'thanks'):
