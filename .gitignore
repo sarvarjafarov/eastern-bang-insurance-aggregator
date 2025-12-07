@@ -20,3 +20,37 @@ dvenv/
 .vscode/
 .idea/
 .DS_Store
+# Python / Django / environment
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+.venv/
+env/
+venv/
+
+# Virtualenv / tooling
+pip-wheel-metadata/
+*.egg
+*.egg-info/
+build/
+dist/
+wheelhouse/
+
+# Django
+*.log
+db.sqlite3
+media/
+staticfiles/
+
+# IDE / editor
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Env files
+.env
+.env.*
