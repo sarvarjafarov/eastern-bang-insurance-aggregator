@@ -1,6 +1,6 @@
 # eastern-bang-insurance-aggregator
 
-This repository hosts a Django project bootstrap for the Eastern Bang Insurance Aggregator.
+This repository hosts a Django project bootstrap for the Eastern Bang Insurance Aggregator. It solves the problem of comparing and selecting travel/health insurance plans for international students by centralizing plan data, providing saved packs, reviews, documents, and analytics (including an A/B test page) in one place.
 
 ## Getting Started
 
@@ -43,6 +43,13 @@ The repo includes a `Procfile` and a `render.yaml` blueprint. To deploy:
 
 The service starts with `gunicorn insurance_aggregator.wsgi:application` and serves static assets via Whitenoise. Collect static assets with `python manage.py collectstatic --noinput` before each deployment; this step is already part of the Render build command.
 
+### Deployment process
+
+- Branching: develop on feature branches; open a PR; get at least one review; merge to `main`.
+- Staging deploy: staging service tracks `main` (or trigger manually). Render build command runs `pip install -r requirements.txt && python manage.py collectstatic --noinput`; start command runs `python manage.py migrate --noinput && gunicorn insurance_aggregator.wsgi:application`.
+- Smoke test staging: visit `/`, `/ef1ca11/`, and run `python manage.py test` locally if needed.
+- Production deploy: trigger after staging passes; same commands as above. URLs documented below.
+
 ## Admin access
 
 The Django admin lives at `/admin/`.
@@ -75,13 +82,28 @@ A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-ban
 ## Environments
 
 - Production (public): `https://eastern-bang-insurance-aggregator.onrender.com/` (Render web service with managed Postgres via `DATABASE_URL`).
-- Staging (public, for pre-prod testing): set up a second Render web service with its own database (e.g., `insurance-aggregator-staging`), pointing at the same repo/branch and using a separate `DATABASE_URL`. Include `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, and analytics IDs (`GA_MEASUREMENT_ID`, `YANDEX_METRICA_ID`) as needed.
+- Staging (public, for pre-prod testing): `https://eastern-bang-insurance-aggregator-staging.onrender.com/` (separate Render service/DB). Include `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, and analytics IDs (`GA_MEASUREMENT_ID`, `YANDEX_METRICA_ID`) as needed.
 
 ## Development
 
 - Install base deps: `pip install -r requirements.txt`
 - Install dev tools (lint): `pip install -r requirements-dev.txt`
 - Lint: `ruff check .` (auto-fix: `ruff check . --fix`)
+- Tests: `python manage.py test`
+
+## Technology stack
+
+- Backend: Python, Django 4, Gunicorn, Whitenoise
+- Database: Postgres (Render) / SQLite locally
+- Analytics: Internal metrics + optional GA/Yandex (env-driven)
+- Frontend: Django templates + Tailwind CDN
+
+## A/B test endpoint
+
+- URL: `/ef1ca11/` (first 7 chars of `sha1("eastern-bang")`).
+- Behavior: lists team nicknames, shows button id `abtest` with variant `kudos`/`thanks`.
+- Tracking: internal metrics for page views/variants and button clicks; optional GA/Yandex via env (`GA_MEASUREMENT_ID`, `YANDEX_METRICA_ID`).
+- Framing: `X-Frame-Options` allows Metrica click maps; ensure analytics IDs are set.
 
 ## Accounts, profiles, saved plans
 
@@ -94,3 +116,17 @@ A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-ban
 - Security: `/account/security/` to log out or delete the account.
 - Billing: `/account/billing/` to add and view billing records.
 - Onboarding checklist: visible on `/account/profile/` showing progress across preferences, saved plans, add-ons, reviews, documents, support, and billing steps.
+
+## Team
+
+- Sarvar Jafarov — implementation, analytics/A/B setup, deployment.
+- Add additional contributors and roles here as needed.
+
+## API
+
+- Traffic ingest: `POST /api/traffic/` (see above).
+- A/B test click tracking: `POST /ef1ca11/click/` with JSON `{"variant": "kudos"|"thanks"}`.
+
+## Sprint documentation
+
+All sprint planning/review/retro docs live under `docs/sprints/` (see that directory for the latest sprint notes).
