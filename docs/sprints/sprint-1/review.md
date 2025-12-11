@@ -1,16 +1,34 @@
 # Sprint 1 Review
 
-## Summary
-- Completed user research and problem definition for the student insurance aggregator.
-- Documented personas, journeys, pain points, and validation evidence.
-- Clarified why current options fall short and captured backlog seeds for the next sprint.
+## Sprint goal
+Set up the full technical stack and unblock feature development.
 
-## Demo and artifacts
-- Research and planning: docs/sprints/sprint-1/planning.md
+## Completed user stories (done)
+| Issue | Demo / Outcome |
+| --- | --- |
+| #1 | GitHub project structure created |
+| #2 | Local dev environment functional |
+| #3 | Django project running |
+| #4 | Admin panel configured |
+| #5 | Render account set up |
+| #6 | GitHub-Render CI integration live |
+| #7 | App successfully deployed |
+| #8 | Wireframes completed and shared |
 
-## Acceptance and notes
-- Alignment: target users include international grads, students with dependents, and outbound exchange students who need flexible, prorated coverage.
-- Risks and assumptions: pricing data and dependent eligibility rules still need validation by market; visa and institutional requirements must be confirmed per country/university.
+## Incomplete user stories
+None.
 
-## Next
-- Prioritize the backlog seeds (intake flow, comparison views, dependents/add-ons, compliance guidance) during sprint 2 planning.
+## Metrics
+- Planned: 25 SP
+- Completed: 25 SP
+- Velocity: 25
+- Completion rate: 100 percent
+
+## Stakeholder feedback
+- Strong technical foundation.
+- Early deployment reduced future delivery risk.
+- Wireframes gave clarity for upcoming sprints.
+
+## Product backlog updates
+- UI-focused stories promoted into Sprint 2.
+- Non-functional items deferred until core flow stabilizes.

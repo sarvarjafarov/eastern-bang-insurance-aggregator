@@ -1,17 +1,25 @@
-# Sprint 1 Retro
+# Sprint 1 Retrospective
 
-Retro discussion pending; seeded prompts below for the session.
+- Date: 14 May 2025
+- Attendees: Sarvar, Timo, Zohran, Shruti, Peenaz
 
-## Keep
-- Persona-driven discovery to keep scope tied to real student needs.
-- Mapping current vs ideal journeys before jumping into solutions.
+## What went well
+1. Backend and deployment completed early.
+2. Clear ownership for infrastructure tasks.
+3. Documentation started from Sprint 1, not retrofitted later.
 
-## Drop
-- Add during the retro meeting.
+## What did not go well
+1. Some setup tasks were larger than expected.
+2. UI work had to wait for backend completion.
 
-## Try
-- Add during the retro meeting.
+## What to improve
+1. Split infra stories more granularly.  
+   - Action: Smaller setup tickets in future.
+2. Earlier UI-backend touchpoints.  
+   - Action: Draft API contracts sooner.
 
-## Action items (proposed)
-- Validate personas and assumptions with student interviews across the three segments (international grads, dependents, outbound exchange).
-- Gather sample pricing and eligibility data from university plans and alternative providers to feed the comparison experience.
+## Action items
+| Action | Owner | Due |
+| --- | --- | --- |
+| Infra story breakdown template | Peenaz | Sprint 2 |
+| Early API outlines | Sarvar | Sprint 2 |
