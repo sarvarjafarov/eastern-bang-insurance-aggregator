@@ -119,8 +119,12 @@ A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-ban
 
 ## Team
 
-- Sarvar Jafarov — implementation, analytics/A/B setup, deployment.
-- Add additional contributors and roles here as needed.
+- Peenaz Khan — Scrum Master; sprint planning, execution tracking, reviews/retros, dashboards, and documentation support.
+- Sarvar Jafarov — backend, infrastructure, analytics/A/B setup, deployment.
+- Timo Asiimwe — wireframes, UX/UI, plan listing and CTA experience.
+- Shruti Shambhavi — sprint and project documentation.
+- Zhao'an Xia — engineering and documentation support.
+- Zohran (docs) — technical documentation lead.
 
 ## API
 

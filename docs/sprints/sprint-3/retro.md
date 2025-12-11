@@ -1,5 +1,8 @@
 # Sprint 3 Retrospective
 
+## Scrum Master
+- Peenaz continued to facilitate planning, reviews, and retros; updated the sprint dashboard; ensured items flowed to done; and captured follow-up actions from retros for subsequent sprints.
+
 ## What went well
 1. Stable velocity by Sprint 3.
 2. Clear division between tech and process work.

@@ -3,6 +3,9 @@
 - Date: 14 May 2025
 - Attendees: Sarvar, Timo, Zohran, Shruti, Peenaz
 
+## Scrum Master
+- Peenaz led planning, estimation facilitation, dashboard updates, and ceremony facilitation. She tracked sprint execution, unblocked process issues, and closed items, translating retro learnings into action items for following sprints.
+
 ## What went well
 1. Backend and deployment completed early.
 2. Clear ownership for infrastructure tasks.
