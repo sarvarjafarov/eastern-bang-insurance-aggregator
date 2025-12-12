@@ -1,5 +1,13 @@
 # eastern-bang-insurance-aggregator
 
+## Project description and problem being solved
+
+### Project Description
+Insurance Buddy is a web-based insurance aggregator designed specifically for international students, scholars, and exchange participants in the US. The platform solves the complexity of navigating the US healthcare system by allowing users to search, filter, and compare health insurance plans based on age, visa type, and family status.
+
+### Problem Being Solved
+International students are required to carry health insurance but face a fragmented and opaque market with limited guidance on compliant and affordable alternatives to costly university plans. Existing options including university insurance, travel insurance, and generic comparison websites are often inflexible, non compliant, or poorly suited to academic calendars and student health needs. As a result, students default into expensive plans or rely on informal advice, leading to inefficiencies, higher costs, and preventable coverage gaps.
+
 This repository hosts a Django project bootstrap for the Eastern Bang Insurance Aggregator. It solves the problem of comparing and selecting travel/health insurance plans for international students by centralizing plan data, providing saved packs, reviews, documents, and analytics (including an A/B test page) in one place.
 
 ## Getting Started
