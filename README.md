@@ -131,8 +131,7 @@ A public A/B test page lives at `/ef1ca11/` (first 7 chars of `sha1("eastern-ban
 - Sarvar Jafarov — backend, infrastructure, analytics/A/B setup, deployment.
 - Timo Asiimwe — wireframes, UX/UI, plan listing and CTA experience.
 - Shruti Shambhavi — sprint and project documentation.
-- Zhao'an Xia — engineering and documentation support.
-- Zohran (docs) — technical documentation lead.
+- Zhao'an Xia — engineering and technical documentation lead.
 
 ## API
 
