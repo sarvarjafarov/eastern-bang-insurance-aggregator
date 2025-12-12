@@ -4,6 +4,7 @@ Current sprint folders:
 - `docs/sprints/sprint-1/` - Technical foundation and first end-to-end slice (planning, review, retro).
 - `docs/sprints/sprint-2/` - Core onboarding flow and data capture (planning, review, retro).
 - `docs/sprints/sprint-3/` - Plan browsing and selection (planning, review, retro).
+- `docs/sprints/sprint-4/` - Stability and UX refinements across auth, add-ons, reviews, and notifications (planning, review, retro).
 
 How to add the next sprint:
 - Create `docs/sprints/sprint-N/` with `planning.md`, `review.md`, and `retro.md`.
